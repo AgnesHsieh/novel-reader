@@ -619,19 +619,24 @@ const server = http.createServer(async (req, res) => {
   });
 });
 
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`\n======================================================`);
-  console.log(`📖 微信讀書風 • 墨韻小說閱讀器 (WeRead Novel) 已啟動！`);
-  console.log(`======================================================`);
-  console.log(`• 本機預覽: http://localhost:${PORT}`);
+if (require.main === module) {
+  server.listen(PORT, '0.0.0.0', () => {
+    console.log(`\n======================================================`);
+    console.log(`📖 微信讀書風 • 墨韻小說閱讀器 (WeRead Novel) 已啟動！`);
+    console.log(`======================================================`);
+    console.log(`• 本機預覽: http://localhost:${PORT}`);
 
-  const interfaces = os.networkInterfaces();
-  for (const name of Object.keys(interfaces)) {
-    for (const iface of interfaces[name]) {
-      if (iface.family === 'IPv4' && !iface.internal) {
-        console.log(`• 手機/同 Wi-Fi 預覽: http://${iface.address}:${PORT}`);
+    const interfaces = os.networkInterfaces();
+    for (const name of Object.keys(interfaces)) {
+      for (const iface of interfaces[name]) {
+        if (iface.family === 'IPv4' && !iface.internal) {
+          console.log(`• 手機/同 Wi-Fi 預覽: http://${iface.address}:${PORT}`);
+        }
       }
     }
-  }
-  console.log(`======================================================\n`);
-});
+    console.log(`======================================================\n`);
+  });
+}
+
+module.exports = server;
+
