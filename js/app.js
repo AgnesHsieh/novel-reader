@@ -624,11 +624,11 @@ class NovelApp {
           : '<path d="M8 5v14l11-7z"/>';
       }
 
-      const voiceName = novelTTS.currentProfile?.name || novelTTS.currentVoiceProfile?.name || '沉穩男聲';
-      const labelVoice = document.getElementById('label-audio-voice');
-      if (labelVoice) labelVoice.textContent = voiceName;
-      const miniVoice = document.getElementById('mini-pill-voice');
-      if (miniVoice) miniVoice.textContent = `${voiceName} · 正在播講`;
+      this.updateAudioVoiceLabel();
+    };
+
+    novelTTS.onVoicesReady = () => {
+      this.updateAudioVoiceLabel();
     };
 
     novelTTS.onChapterFinished = () => {
@@ -748,11 +748,20 @@ class NovelApp {
   }
 
   openAudioSheet() {
+    this.updateAudioVoiceLabel();
     if (!novelTTS.isPlaying && !novelTTS.isPaused) {
       novelTTS.play();
     }
     const modal = document.getElementById('audio-player-modal');
     if (modal) modal.classList.add('active');
+  }
+
+  updateAudioVoiceLabel() {
+    const voiceName = novelTTS.getCurrentVoiceName();
+    const labelVoice = document.getElementById('label-audio-voice');
+    if (labelVoice) labelVoice.textContent = voiceName;
+    const miniVoice = document.getElementById('mini-pill-voice');
+    if (miniVoice) miniVoice.textContent = `${voiceName} · 正在播講`;
   }
 
   closeAudioSheet() {
@@ -841,6 +850,7 @@ class NovelApp {
     const selectVoice = (idx) => {
       novelTTS.setVoiceByIndex(idx);
       this.closeVoicePicker();
+      this.updateAudioVoiceLabel();
       this.showToast(`已切換聽書聲音為：${voices[idx].name}`);
     };
 
