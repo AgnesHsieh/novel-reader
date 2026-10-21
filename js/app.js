@@ -258,6 +258,57 @@ class NovelApp {
     }
   }
 
+  // Download and cache chapters offline for the current book
+  async cacheCurrentBookChapters() {
+    if (!this.currentBook || !this.currentBook.chapters) {
+      this.showToast('尚未載入書籍');
+      return;
+    }
+    const chapters = this.currentBook.chapters;
+    const uncached = chapters.filter(c => !c.content);
+
+    if (uncached.length === 0) {
+      this.showToast('本書所有章節均已離線快取完畢！');
+      return;
+    }
+
+    const countChoice = prompt(
+      `《${this.currentBook.title}》全書共 ${chapters.length} 章（尚有 ${uncached.length} 章未快取）。\n` +
+      `請輸入欲離線下載的章節數量（例如：50 或輸入 all 下載全部）：`,
+      '50'
+    );
+    if (!countChoice) return;
+
+    let targetCount = countChoice.trim().toLowerCase() === 'all' ? uncached.length : parseInt(countChoice, 10);
+    if (isNaN(targetCount) || targetCount <= 0) targetCount = 30;
+
+    const toDownload = uncached.slice(0, targetCount);
+    let downloaded = 0;
+    this.showToast(`📥 開始離線下載 ${toDownload.length} 章，請保持網路連線...`);
+
+    for (let i = 0; i < toDownload.length; i++) {
+      const ch = toDownload[i];
+      try {
+        const full = await novelSources.getChapterContent(this.currentBook.id, ch, i);
+        if (full && full.content) {
+          ch.content = full.content;
+          ch.fontFace = full.fontFace;
+          ch.fontFamily = full.fontFamily;
+          downloaded++;
+          if (downloaded % 5 === 0 || downloaded === toDownload.length) {
+            this.showToast(`📥 離線下載進度: ${downloaded}/${toDownload.length} 章...`);
+            await novelDB.saveChapters(this.currentBook.id, this.currentBook.chapters);
+          }
+        }
+      } catch (err) {
+        console.warn('Cache chapter failed:', err);
+      }
+    }
+
+    await novelDB.saveChapters(this.currentBook.id, this.currentBook.chapters);
+    this.showToast(`🎉 離線下載完成！已成功儲存 ${downloaded} 個章節，無網路時亦可流暢閱讀與 AI 聽書！`);
+  }
+
   async loadChapter(chapterIndex, scrollPercent = 0) {
     if (!this.currentBook || !this.currentBook.chapters[chapterIndex]) return;
 
@@ -1152,6 +1203,7 @@ class NovelApp {
     });
 
     // AI Audio Listening Mode (聽書)
+    this.on('btn-reader-cache-top', 'click', () => this.cacheCurrentBookChapters());
     this.on('btn-reader-audio', 'click', () => this.openAudioSheet());
     this.on('btn-tool-audio', 'click', () => this.openAudioSheet());
     this.on('audio-mini-pill', 'click', (e) => {

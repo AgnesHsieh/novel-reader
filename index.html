@@ -11,6 +11,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="墨韻讀書">
   <meta name="theme-color" content="#f6f1e7">
+  <link rel="manifest" href="manifest.json">
 
   <!-- Stylesheets -->
   <link rel="stylesheet" href="css/reader.css?v=202">
@@ -238,6 +239,11 @@
         <div id="reader-chapter-title-top" class="reader-chapter-title-top">章節名稱</div>
       </div>
       <div style="display: flex; align-items: center; gap: 4px;">
+        <button id="btn-reader-cache-top" class="icon-btn" aria-label="離線下載" title="離線快取章節">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+          </svg>
+        </button>
         <button id="btn-reader-shelf-top" class="icon-btn reader-shelf-toggle-btn" aria-label="收藏至書架" title="收藏至書架">
           <svg id="top-shelf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;">
             <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
@@ -645,10 +651,23 @@
   <div id="wr-toast" class="wr-toast">已更新閱讀進度</div>
 
   <!-- Scripts -->
-  <script src="js/chinese_conv.js?v=215"></script>
-  <script src="js/sources.js?v=215"></script>
-  <script src="js/db.js?v=215"></script>
-  <script src="js/tts.js?v=215"></script>
-  <script src="js/app.js?v=215"></script>
+  <script src="js/chinese_conv.js?v=216"></script>
+  <script src="js/sources.js?v=216"></script>
+  <script src="js/db.js?v=216"></script>
+  <script src="js/tts.js?v=216"></script>
+  <script src="js/app.js?v=216"></script>
+
+  <!-- Service Worker Registration for PWA & Offline Access -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').then((reg) => {
+          console.log('[SW] ServiceWorker registered:', reg.scope);
+        }).catch((err) => {
+          console.warn('[SW] ServiceWorker registration failed:', err);
+        });
+      });
+    }
+  </script>
 </body>
 </html>
