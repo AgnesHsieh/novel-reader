@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>墨韻讀書 - 全網免費小說閱讀器 (微信讀書風 • AI聽書)</title>
+  <meta name="description" content="微信讀書風格的極致純淨小說閱讀器。支援全網免費小說搜尋解析、多種音色AI聽書、自動記憶閱讀進度、自建精美書架與本地TXT匯入。">
+
+  <!-- Mobile & PWA Meta Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="墨韻讀書">
+  <meta name="theme-color" content="#f6f1e7">
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/reader.css?v=202">
+
+  <!-- PDF.js Engine (Mozilla Client-side PDF Parser) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+</head>
+<body data-theme="paper">
+
+  <div class="app-container">
+    <!-- Top Header -->
+    <header class="wr-header" id="app-header">
+      <div class="wr-header-title">
+        <span>墨韻讀書</span>
+        <span class="wr-brand-badge">WeRead</span>
+      </div>
+      <div class="wr-header-actions">
+        <button id="btn-quick-search" class="icon-btn" aria-label="全網搜尋小說" title="全網搜尋小說">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+          </svg>
+        </button>
+        <button id="btn-add-menu" class="icon-btn" aria-label="新增小說" title="新增小說 / 匯入本地">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- VIEW 1: 書架 (Bookshelf) -->
+    <main id="view-shelf" class="view-panel active">
+      <!-- Reading stats card (WeChat Read signature header) -->
+      <section class="shelf-stats-card">
+        <div class="stats-info">
+          <span class="stats-label">本週閱讀時長</span>
+          <span class="stats-val" id="shelf-stats-val">3 小時 45 分鐘</span>
+        </div>
+        <button id="btn-stats-badge" class="stats-badge-btn">
+          <span>讀書榜</span>
+          <svg style="width: 14px; height: 14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+          </svg>
+        </button>
+      </section>
+
+      <!-- Subbar: Filter Tabs & Manage -->
+      <section class="shelf-subbar">
+        <div class="shelf-tabs">
+          <button class="shelf-tab-btn active" data-filter="all">全部 (<span id="shelf-count-all">0</span>)</button>
+          <button class="shelf-tab-btn" data-filter="reading">在讀 (<span id="shelf-count-reading">0</span>)</button>
+          <button class="shelf-tab-btn" data-filter="finished">已讀完</button>
+        </div>
+        <div class="shelf-actions">
+          <button id="btn-shelf-paste-url" class="action-pill-btn">+ 貼上網址</button>
+          <button id="btn-import-book" class="action-pill-btn" title="匯入本地 PDF、TXT 或 EPUB 小說">
+            <svg style="width: 13px; height: 13px; margin-right: 3px; vertical-align: -2px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+            </svg>
+            匯入書籍
+          </button>
+          <button id="btn-manage-shelf" class="action-pill-btn secondary" title="管理/批次移出書架">
+            <svg style="width: 13px; height: 13px; margin-right: 3px; vertical-align: -2px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+            </svg>
+            管理書架
+          </button>
+          <input type="file" id="file-import-input" accept=".txt,.pdf,.epub,.md,.text" multiple style="display:none;">
+        </div>
+      </section>
+
+      <!-- 3D Book Grid -->
+      <section id="shelf-books-grid" class="bookshelf-grid">
+        <!-- Rendered dynamically by app.js -->
+      </section>
+    </main>
+
+    <!-- VIEW 2: 發現 & 全網搜書 (Discover & Search) -->
+    <main id="view-search" class="view-panel">
+      <section class="search-container">
+        <div class="search-box">
+          <svg style="width: 18px; height: 18px; color: var(--wr-text-muted);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+          </svg>
+          <input type="text" id="search-input" class="search-input" placeholder="搜尋全網小說、書名、作者..." autocomplete="off">
+          <button id="btn-do-search" class="search-btn">搜尋</button>
+        </div>
+
+        <!-- Hot search recommendations -->
+        <div class="search-quick-tags">
+          <span style="font-size: 11px; color: var(--wr-text-muted); align-self: center;">熱搜:</span>
+          <button class="tag-chip hot" data-kw="詭秘之主">詭秘之主</button>
+          <button class="tag-chip hot" data-kw="慶餘年">慶餘年</button>
+          <button class="tag-chip" data-kw="鬥破蒼穹">鬥破蒼穹</button>
+          <button class="tag-chip" data-kw="凡人修仙傳">凡人修仙傳</button>
+          <button class="tag-chip" data-kw="三體">三體</button>
+          <button class="tag-chip" data-kw="三國演義">三國演義</button>
+        </div>
+      </section>
+
+      <!-- Search results container -->
+      <section id="search-results-list" class="search-results-list">
+        <!-- Populated via search -->
+      </section>
+    </main>
+
+    <!-- VIEW 3: 我的 / 統計與設定 (Profile) -->
+    <main id="view-profile" class="view-panel">
+      <div style="padding: 16px 18px;">
+        <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 24px;">
+          <div style="width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #3b82f6, #1d4ed8); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 20px;">
+            書
+          </div>
+          <div>
+            <h2 style="font-size: 18px; font-weight: 700;">尊貴讀者</h2>
+            <p style="font-size: 12px; color: var(--wr-text-secondary); margin-top: 2px;">已啟用微信讀書沉浸閱讀與 AI 聽書引擎</p>
+          </div>
+        </div>
+
+        <!-- Stats Overview Cards -->
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 24px;">
+          <div style="background: var(--wr-bg-card); padding: 14px; border-radius: var(--wr-radius-md); border: 1px solid var(--wr-border);">
+            <div style="font-size: 12px; color: var(--wr-text-secondary);">累計閱讀時長</div>
+            <div id="stat-total-time" style="font-size: 20px; font-weight: 800; color: var(--wr-primary); margin-top: 4px;">4 小時 15 分</div>
+          </div>
+          <div style="background: var(--wr-bg-card); padding: 14px; border-radius: var(--wr-radius-md); border: 1px solid var(--wr-border);">
+            <div style="font-size: 12px; color: var(--wr-text-secondary);">書架藏書</div>
+            <div id="stat-shelf-total" style="font-size: 20px; font-weight: 800; color: var(--wr-accent-gold); margin-top: 4px;">3 本</div>
+          </div>
+        </div>
+
+        <!-- Reading Appearance & Font Settings inside Profile -->
+        <div style="background: var(--wr-bg-card); border-radius: var(--wr-radius-md); border: 1px solid var(--wr-border); padding: 16px 18px; margin-bottom: 16px;">
+          <div style="font-size: 14px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
+            <span>閱讀字體與外觀設定</span>
+            <span style="font-size: 11px; color: var(--wr-text-secondary);">即時生效</span>
+          </div>
+
+          <!-- Font Size Row -->
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+            <span style="font-size: 13px; color: var(--wr-text-secondary);">字體大小</span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <button id="btn-profile-font-minus" class="action-pill-btn" style="padding: 4px 12px; font-weight: 700;">A -</button>
+              <span id="profile-font-display" style="font-weight: 700; font-size: 14px; min-width: 48px; text-align: center;">18 px</span>
+              <button id="btn-profile-font-plus" class="action-pill-btn" style="padding: 4px 12px; font-weight: 700;">A +</button>
+            </div>
+          </div>
+
+          <!-- Themes Row -->
+          <div style="display: flex; align-items: center; justify-content: space-between;">
+            <span style="font-size: 13px; color: var(--wr-text-secondary);">默認主題</span>
+            <div style="display: flex; gap: 6px;">
+              <button class="theme-chip-btn mini" data-theme-val="paper" style="background: #f6f1e7; color: #322b25; width: 34px; height: 34px; border-radius: 8px; font-size: 11px; font-weight: 700;" title="米黃羊皮紙">米</button>
+              <button class="theme-chip-btn mini" data-theme-val="white" style="background: #ffffff; color: #1a1a1a; width: 34px; height: 34px; border-radius: 8px; font-size: 11px; font-weight: 700;" title="純白雅緻">白</button>
+              <button class="theme-chip-btn mini" data-theme-val="mint" style="background: #e3ece1; color: #1e3524; width: 34px; height: 34px; border-radius: 8px; font-size: 11px; font-weight: 700;" title="護眼豆沙綠">綠</button>
+              <button class="theme-chip-btn mini" data-theme-val="slate" style="background: #26282e; color: #c8cad0; width: 34px; height: 34px; border-radius: 8px; font-size: 11px; font-weight: 700;" title="雅灰夜讀">灰</button>
+              <button class="theme-chip-btn mini" data-theme-val="oled" style="background: #121212; color: #888888; width: 34px; height: 34px; border-radius: 8px; font-size: 11px; font-weight: 700;" title="極致純黑">黑</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Preferences -->
+        <div style="background: var(--wr-bg-card); border-radius: var(--wr-radius-md); border: 1px solid var(--wr-border); overflow: hidden;">
+          <div style="padding: 14px 18px; border-bottom: 1px solid var(--wr-border); display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 14px; font-weight: 600;">AI 聽書語音引擎</span>
+            <button id="btn-profile-voice" class="action-pill-btn">選擇聲音</button>
+          </div>
+          <div style="padding: 14px 18px; border-bottom: 1px solid var(--wr-border); display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 14px; font-weight: 600;">匯入網絡小說網址</span>
+            <button id="btn-profile-url" class="action-pill-btn">貼上網址</button>
+          </div>
+          <div style="padding: 14px 18px; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 14px; font-weight: 600;">清空本機快取</span>
+            <button id="btn-clear-cache" class="action-pill-btn" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.3);">清空</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Bottom Navigation Tab Bar (微信讀書主介面底欄) -->
+    <nav class="wr-tabbar" id="app-tabbar">
+      <button class="tabbar-item active" data-tab="shelf">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+        </svg>
+        <span>書架</span>
+      </button>
+
+      <button class="tabbar-item" data-tab="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+        </svg>
+        <span>發現</span>
+      </button>
+
+      <button class="tabbar-item" data-tab="profile">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+        </svg>
+        <span>我的</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- ==========================================================================
+       READER VIEWPORT (沉浸式全螢幕閱讀器)
+       ========================================================================== -->
+  <div id="reader-viewport" class="reader-viewport">
+    <!-- Top Nav Bar (Shown on tap center) -->
+    <header class="reader-top-bar" id="reader-top-bar">
+      <button id="btn-reader-back" class="icon-btn" aria-label="返回書架">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+        </svg>
+      </button>
+      <div class="reader-title-container">
+        <div id="reader-book-title" class="reader-book-title">書籍標題</div>
+        <div id="reader-chapter-title-top" class="reader-chapter-title-top">章節名稱</div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 4px;">
+        <button id="btn-reader-shelf-top" class="icon-btn reader-shelf-toggle-btn" aria-label="收藏至書架" title="收藏至書架">
+          <svg id="top-shelf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 20px; height: 20px;">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
+          </svg>
+        </button>
+        <button id="btn-reader-settings-top" class="icon-btn" aria-label="外觀字體" title="調整字體與外觀" style="font-weight: 700; font-size: 15px;">
+          Aa
+        </button>
+        <button id="btn-reader-audio" class="icon-btn" aria-label="AI 聽書" title="開始聽書">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.414 0-.75-.336-.75-.75V8.25c0-.414.336-.75.75-.75h2.24z" />
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Reading Scroll Canvas -->
+    <main class="reader-content-scroll" id="reader-scroll-canvas">
+      <h1 class="reader-chapter-heading" id="reader-chapter-heading">章節標題</h1>
+      <div id="reader-text-body">
+        <!-- Rendered paragraphs -->
+      </div>
+
+      <!-- Bottom Chapter Switch Actions -->
+      <div class="reader-chapter-actions">
+        <button id="btn-prev-chapter" class="reader-action-btn">← 上一章</button>
+        <button id="btn-reader-toc-inline" class="reader-action-btn">目錄</button>
+        <button id="btn-next-chapter" class="reader-action-btn">下一章 →</button>
+      </div>
+    </main>
+
+    <!-- Subtle Reading Status Bar (Always visible at bottom during reading) -->
+    <div class="reader-status-bar" id="reader-status-bar">
+      <span id="status-bar-chapter">正在加載...</span>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <span id="status-bar-timer" style="display: none; color: #d97706; font-weight: 700;">⏱️ 14:59</span>
+        <span id="status-bar-percent">0%</span>
+      </div>
+    </div>
+
+    <!-- Reader Bottom Controls Bar (Shown on tap center) -->
+    <footer class="reader-bottom-bar" id="reader-bottom-bar">
+      <!-- Progress Slider -->
+      <div class="reader-progress-slider-wrapper">
+        <button id="btn-slider-prev" class="progress-slider-btn">上一章</button>
+        <input type="range" id="reader-progress-slider" class="slider-input" min="0" max="100" value="0">
+        <button id="btn-slider-next" class="progress-slider-btn">下一章</button>
+      </div>
+
+      <!-- 4 Core Actions: 目錄, 進度, 聽書, 外觀 -->
+      <div class="reader-toolbar-buttons">
+        <button id="btn-tool-toc" class="toolbar-tool-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12" />
+          </svg>
+          <span>目錄</span>
+        </button>
+
+        <button id="btn-tool-audio" class="toolbar-tool-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.414 0-.75-.336-.75-.75V8.25c0-.414.336-.75.75-.75h2.24z" />
+          </svg>
+          <span>聽書</span>
+        </button>
+
+        <button id="btn-reader-timer" class="toolbar-tool-btn" style="position: relative;" title="定時關閉聽書">
+          <span style="font-size: 19px;">⏱️</span>
+          <span id="reader-timer-toolbar-label">定時關閉</span>
+          <span id="reader-timer-badge" style="display: none; position: absolute; top: 0px; right: 4px; background: #d97706; color: #fff; font-size: 9px; padding: 1px 5px; border-radius: 9999px; font-weight: 800; font-variant-numeric: tabular-nums;">14:59</span>
+        </button>
+
+        <button id="btn-tool-shelf" class="toolbar-tool-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
+          </svg>
+          <span id="btn-tool-shelf-text">加入書架</span>
+        </button>
+
+        <button id="btn-tool-settings" class="toolbar-tool-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
+          </svg>
+          <span>外觀</span>
+        </button>
+      </div>
+    </footer>
+  </div>
+
+  <!-- ==========================================================================
+       TOC DRAWER (目錄側邊欄)
+       ========================================================================== -->
+  <div id="toc-drawer-overlay" class="toc-drawer-overlay">
+    <div class="toc-drawer">
+      <div class="toc-header">
+        <h3 class="toc-title">目錄 (<span id="toc-total-count">0</span> 章)</h3>
+        <button id="btn-close-toc" class="icon-btn" aria-label="關閉目錄">✕</button>
+      </div>
+      <div id="toc-items-list" class="toc-list">
+        <!-- Rendered chapters -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       APPEARANCE SETTINGS SHEET (外觀面板)
+       ========================================================================== -->
+  <div id="settings-sheet-overlay" class="settings-sheet-overlay">
+    <div class="settings-sheet">
+      <!-- Font Size -->
+      <div>
+        <div class="settings-section-title" style="margin-bottom: 8px;">字體大小</div>
+        <div class="font-size-row">
+          <button id="btn-font-decrease" class="font-size-btn">A -</button>
+          <div id="font-size-display" class="font-size-display">18 px</div>
+          <button id="btn-font-increase" class="font-size-btn">A +</button>
+        </div>
+      </div>
+
+      <!-- Themes (WeChat Read 5 Colors) -->
+      <div>
+        <div class="settings-section-title" style="margin-bottom: 8px;">閱讀主題</div>
+        <div class="theme-selector-grid">
+          <button class="theme-chip-btn active" data-theme-val="paper" style="background: #f6f1e7; color: #322b25;">
+            <span>米黃</span>
+          </button>
+          <button class="theme-chip-btn" data-theme-val="white" style="background: #ffffff; color: #1a1a1a;">
+            <span>純白</span>
+          </button>
+          <button class="theme-chip-btn" data-theme-val="mint" style="background: #e3ece1; color: #1e3524;">
+            <span>護眼</span>
+          </button>
+          <button class="theme-chip-btn" data-theme-val="slate" style="background: #26282e; color: #c8cad0;">
+            <span>雅灰</span>
+          </button>
+          <button class="theme-chip-btn" data-theme-val="oled" style="background: #121212; color: #888888;">
+            <span>純黑</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Font Family -->
+      <div>
+        <div class="settings-section-title" style="margin-bottom: 8px;">字型選擇</div>
+        <div class="segmented-control" id="font-family-control">
+          <button class="segment-item-btn active" data-font="system">系統黑體</button>
+          <button class="segment-item-btn" data-font="serif">經典宋體</button>
+          <button class="segment-item-btn" data-font="kaiti">典雅楷體</button>
+        </div>
+      </div>
+
+      <!-- Line Spacing -->
+      <div>
+        <div class="settings-section-title" style="margin-bottom: 8px;">行間距</div>
+        <div class="segmented-control" id="line-spacing-control">
+          <button class="segment-item-btn" data-spacing="1.5">緊湊</button>
+          <button class="segment-item-btn active" data-spacing="1.85">適中</button>
+          <button class="segment-item-btn" data-spacing="2.2">寬鬆</button>
+        </div>
+      </div>
+
+      <!-- Simplified / Traditional Chinese Mode (簡繁轉換) -->
+      <div>
+        <div class="settings-section-title" style="margin-bottom: 8px;">簡繁轉換</div>
+        <div class="segmented-control" id="chinese-mode-control">
+          <button class="segment-item-btn active" data-chinese-mode="s2t">繁體正體</button>
+          <button class="segment-item-btn" data-chinese-mode="origin">原文簡體</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       AI AUDIO LISTENING MODE (微信讀書 AI 聽書)
+       ========================================================================== -->
+  <!-- Floating Mini Audio Pill (Bottom Right) -->
+  <div id="audio-mini-pill" class="audio-mini-pill">
+    <div id="mini-disc" class="mini-disc">
+      <div class="mini-disc-center"></div>
+    </div>
+    <div class="mini-pill-info">
+      <div style="display: flex; align-items: center; gap: 6px;">
+        <span id="mini-pill-title" class="mini-pill-title">AI 聽書播放中</span>
+        <span id="mini-pill-timer" style="display: none; background: rgba(217, 119, 6, 0.2); color: #d97706; padding: 1px 6px; border-radius: 9999px; font-size: 10px; font-weight: 700;">⏱️ 14:59</span>
+      </div>
+      <span id="mini-pill-voice" class="mini-pill-status">溫柔女聲 · 點擊展開</span>
+    </div>
+    <button id="btn-mini-play-toggle" class="icon-btn" style="width: 30px; height: 30px;">
+      <svg id="mini-play-icon" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Full-Screen / Bottom Sheet Audio Player -->
+  <div id="audio-player-modal" class="audio-player-modal">
+    <div class="audio-player-sheet">
+      <div style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 13px; font-weight: 700; color: var(--wr-text-secondary);">AI 聽書演播室</span>
+        <button id="btn-close-audio-sheet" class="icon-btn">✕</button>
+      </div>
+
+      <!-- Live countdown banner in Audio Sheet -->
+      <div id="audio-timer-banner" style="display: none; background: rgba(217, 119, 6, 0.15); color: #d97706; padding: 6px 16px; border-radius: 9999px; font-size: 13px; font-weight: 700; border: 1px solid rgba(217, 119, 6, 0.3);">
+        ⏱️ 倒計時：14 分 59 秒後停止播放
+      </div>
+
+      <!-- Big Vinyl Record Center -->
+      <div id="audio-big-disc" class="audio-big-disc">
+        <div id="audio-big-cover" class="audio-big-cover">
+          墨韻<br>聽書
+        </div>
+      </div>
+
+      <!-- Waveform Equalizer -->
+      <div class="audio-equalizer">
+        <div class="eq-bar"></div>
+        <div class="eq-bar"></div>
+        <div class="eq-bar"></div>
+        <div class="eq-bar"></div>
+        <div class="eq-bar"></div>
+      </div>
+
+      <!-- Live Teleprompter (Current reading sentence) -->
+      <div class="audio-teleprompter">
+        <p id="teleprompter-text" class="teleprompter-text">正在準備演播內容...</p>
+      </div>
+
+      <!-- Main Controls (Prev, Skip -15s, Play/Pause, Skip +15s, Next) -->
+      <div class="audio-controls-row">
+        <button id="btn-audio-prev-para" class="btn-audio-ctrl" title="上一句">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+          </svg>
+        </button>
+
+        <button id="btn-audio-play-main" class="btn-audio-ctrl btn-audio-play-big">
+          <svg id="audio-main-play-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M8 5v14l11-7z"/>
+          </svg>
+        </button>
+
+        <button id="btn-audio-next-para" class="btn-audio-ctrl" title="下一句">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Sub Actions: 聲音, 語速, 定時關閉 -->
+      <div class="audio-meta-row">
+        <button id="btn-audio-voice-pick" class="audio-meta-btn">
+          <span style="font-size: 16px;">🎙️</span>
+          <span id="label-audio-voice">切換聲音</span>
+        </button>
+
+        <button id="btn-audio-speed-pick" class="audio-meta-btn">
+          <span style="font-size: 16px;">⚡</span>
+          <span id="label-audio-speed">1.0x 語速</span>
+        </button>
+
+        <button id="btn-audio-timer-pick" class="audio-meta-btn">
+          <span style="font-size: 16px;">⏱️</span>
+          <span id="label-audio-timer">定時關閉</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Voice Picker Modal -->
+  <div id="voice-picker-modal" class="voice-picker-modal">
+    <div class="voice-picker-sheet">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--wr-border); padding-bottom: 12px;">
+        <h3 style="font-size: 16px; font-weight: 700;">選擇 AI 聽書聲音</h3>
+        <button id="btn-close-voice-modal" class="icon-btn">✕</button>
+      </div>
+      <div id="voice-list-container" class="voice-list-container">
+        <!-- Dynamically populated voices -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Sleep Timer Picker Modal (微信讀書專屬高質感定時面板) -->
+  <div id="timer-picker-modal" class="voice-picker-modal">
+    <div class="timer-picker-sheet">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--wr-border); padding-bottom: 12px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 20px;">⏱️</span>
+          <h3 style="font-size: 17px; font-weight: 700; color: var(--wr-text);">定時關閉聽書</h3>
+        </div>
+        <button id="btn-close-timer-modal" class="icon-btn">✕</button>
+      </div>
+
+      <!-- Prominent Active / Inactive Digital Countdown Card -->
+      <div id="timer-active-box" class="timer-active-card" style="display: none;">
+        <div class="timer-active-label">⏱️ 定時倒計時進行中</div>
+        <div id="timer-modal-countdown" class="timer-display-big">15:00</div>
+        <div id="timer-modal-sub" class="timer-active-sub">時間到後將自動暫停朗讀</div>
+        <button id="btn-cancel-timer-quick" class="timer-cancel-btn" type="button">關閉定時</button>
+      </div>
+
+      <div id="timer-inactive-box" class="timer-active-card inactive">
+        <div style="font-size: 22px;">⏱️</div>
+        <div style="font-size: 14px; font-weight: 700; color: var(--wr-text);">尚未設定定時關閉</div>
+        <div class="timer-active-sub">選擇下方預設時間或輸入自訂分鐘數</div>
+      </div>
+
+      <!-- Quick Preset Buttons Grid (清楚大數字選項) -->
+      <div style="font-size: 13px; font-weight: 700; color: var(--wr-text-secondary); margin-top: 4px;">快捷時間設定：</div>
+      <div class="timer-presets-grid">
+        <button class="timer-preset-btn timer-choice" data-timer="15" type="button">
+          <span class="timer-btn-num">15</span>
+          <span class="timer-btn-unit">分鐘後停止</span>
+        </button>
+        <button class="timer-preset-btn timer-choice" data-timer="30" type="button">
+          <span class="timer-btn-num">30</span>
+          <span class="timer-btn-unit">分鐘後停止</span>
+        </button>
+        <button class="timer-preset-btn timer-choice" data-timer="45" type="button">
+          <span class="timer-btn-num">45</span>
+          <span class="timer-btn-unit">分鐘後停止</span>
+        </button>
+        <button class="timer-preset-btn timer-choice" data-timer="60" type="button">
+          <span class="timer-btn-num">60</span>
+          <span class="timer-btn-unit">分鐘後停止</span>
+        </button>
+        <button class="timer-preset-btn timer-choice" data-timer="90" type="button">
+          <span class="timer-btn-num">90</span>
+          <span class="timer-btn-unit">分鐘後停止</span>
+        </button>
+        <button class="timer-preset-btn timer-choice" data-timer="120" type="button">
+          <span class="timer-btn-num">120</span>
+          <span class="timer-btn-unit">分鐘後停止</span>
+        </button>
+        <button class="timer-preset-btn timer-choice chapter-btn" data-timer="chapter" type="button">
+          <span style="font-size: 14px; font-weight: 700;">📖 讀完當前章節後停止</span>
+          <span style="font-size: 12px; color: var(--wr-text-secondary);">本章播放完自動暫停</span>
+        </button>
+      </div>
+
+      <!-- Custom Minutes Stepper (自訂數字輸入) -->
+      <div class="timer-custom-box">
+        <span style="font-size: 13px; font-weight: 700; color: var(--wr-text);">自訂分鐘數：</span>
+        <div class="timer-stepper">
+          <button id="btn-timer-minus" class="stepper-btn" type="button" title="減少5分鐘">−</button>
+          <input type="number" id="input-custom-timer" class="stepper-input" min="1" max="300" value="20">
+          <span style="font-size: 12px; color: var(--wr-text-secondary); margin-right: 4px;">分鐘</span>
+          <button id="btn-timer-plus" class="stepper-btn" type="button" title="增加5分鐘">+</button>
+        </div>
+        <button id="btn-apply-custom-timer" class="btn-apply-timer" type="button">確定定時</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden File Input for TXT/EPUB Upload -->
+  <input type="file" id="input-txt-file" accept=".txt,.epub" style="display: none;">
+
+  <!-- Paste URL / Novel Name Modal -->
+  <div id="modal-paste-url" class="voice-picker-modal">
+    <div class="voice-picker-sheet">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+        <h3 style="font-size: 16px; font-weight: 700;">匯入小說（支援網址或直接搜書名）</h3>
+        <button id="btn-close-url-modal" class="icon-btn">✕</button>
+      </div>
+      <p style="font-size: 13px; color: var(--wr-text-secondary); margin-bottom: 8px; line-height: 1.5;">
+        支援貼上任意免費小說網址，或<strong>直接輸入小說名稱</strong>。<br>
+        <span style="color: var(--wr-primary); font-size: 12px;">💡 若目標網站（如 twkan.com、稷下書院）啟用了防爬蟲人機驗證，直接在此輸入書名，系統將自動為您免驗證搜尋正文並加入書架！</span>
+      </p>
+      <input type="text" id="input-novel-url" class="search-input" style="width: 100%; border: 1px solid var(--wr-border); padding: 12px 14px; border-radius: var(--wr-radius-sm); margin: 8px 0 12px;" placeholder="輸入小說書名（如：凡人修仙傳）或貼上免費小說網址..." />
+
+      <!-- Quick sample test URLs -->
+      <div style="margin-bottom: 16px;">
+        <div style="font-size: 11px; color: var(--wr-text-secondary); margin-bottom: 6px;">點擊快速填入熱門免費源範例：</div>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+          <button type="button" class="tag-chip sample-url-chip" data-url="大奉打更人">📖 《大奉打更人》</button>
+          <button type="button" class="tag-chip sample-url-chip" data-url="劍來">📖 《劍來》</button>
+          <button type="button" class="tag-chip sample-url-chip" data-url="雪中悍刀行">📖 《雪中悍刀行》</button>
+          <button type="button" class="tag-chip sample-url-chip" data-url="https://www.bqgka.com/book/128/">🌐 筆趣閣目錄源</button>
+        </div>
+      </div>
+
+      <button id="btn-confirm-url" class="search-btn" style="width: 100%; padding: 13px; font-size: 15px; font-weight: 700;">🔍 智慧搜尋並加入書架 / 解析網址</button>
+    </div>
+  </div>
+
+  <!-- Floating Toast Message Pill -->
+  <div id="wr-toast" class="wr-toast">已更新閱讀進度</div>
+
+  <!-- Scripts -->
+  <script src="js/chinese_conv.js?v=215"></script>
+  <script src="js/sources.js?v=215"></script>
+  <script src="js/db.js?v=215"></script>
+  <script src="js/tts.js?v=215"></script>
+  <script src="js/app.js?v=215"></script>
+</body>
+</html>

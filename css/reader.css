@@ -1,0 +1,1870 @@
+/* ==========================================================================
+   WeChat Read (微信讀書) Signature Design System & Reader Styles
+   ========================================================================== */
+
+:root {
+  /* Global Brand & Accent */
+  --wr-primary: #3b82f6;
+  --wr-primary-hover: #2563eb;
+  --wr-accent-gold: #d97706;
+  --wr-radius-sm: 8px;
+  --wr-radius-md: 14px;
+  --wr-radius-lg: 20px;
+  --wr-radius-pill: 9999px;
+  --wr-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
+  --wr-shadow-md: 0 6px 20px rgba(0, 0, 0, 0.08);
+  --wr-shadow-lg: 0 12px 36px rgba(0, 0, 0, 0.16);
+  --wr-transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  --wr-safe-top: env(safe-area-inset-top, 0px);
+  --wr-safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Themes: WeChat Read 5 Classic Aesthetics */
+/* 1. 羊皮紙米黃 (Default Classic) */
+body[data-theme="paper"], .theme-paper {
+  --wr-bg: #f6f1e7;
+  --wr-bg-card: #ebe4d5;
+  --wr-bg-subtle: #efe9dc;
+  --wr-bg-elevated: #faf6f0;
+  --wr-text: #2f2720;
+  --wr-text-secondary: #7e7368;
+  --wr-text-muted: #a69c92;
+  --wr-border: #ded5c4;
+  --wr-card-shadow: 0 8px 24px rgba(60, 48, 36, 0.09);
+  --wr-highlight: rgba(217, 119, 6, 0.22);
+}
+
+/* 2. 純白雅緻 */
+body[data-theme="white"], .theme-white {
+  --wr-bg: #ffffff;
+  --wr-bg-card: #f4f4f6;
+  --wr-bg-subtle: #f8f8fa;
+  --wr-bg-elevated: #ffffff;
+  --wr-text: #1a1a1a;
+  --wr-text-secondary: #666666;
+  --wr-text-muted: #999999;
+  --wr-border: #e6e6e8;
+  --wr-card-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+  --wr-highlight: rgba(59, 130, 246, 0.18);
+}
+
+/* 3. 護眼豆沙綠 */
+body[data-theme="mint"], .theme-mint {
+  --wr-bg: #e3ece1;
+  --wr-bg-card: #d4e2d1;
+  --wr-bg-subtle: #dbe7da;
+  --wr-bg-elevated: #edf4ec;
+  --wr-text: #1d3323;
+  --wr-text-secondary: #526f58;
+  --wr-text-muted: #7d9682;
+  --wr-border: #c8d8c5;
+  --wr-card-shadow: 0 8px 24px rgba(29, 51, 35, 0.08);
+  --wr-highlight: rgba(16, 185, 129, 0.22);
+}
+
+/* 4. 雅灰夜讀 */
+body[data-theme="slate"], .theme-slate {
+  --wr-bg: #26282e;
+  --wr-bg-card: #31343c;
+  --wr-bg-subtle: #2b2e35;
+  --wr-bg-elevated: #373a43;
+  --wr-text: #c8cad0;
+  --wr-text-secondary: #8b8f9a;
+  --wr-text-muted: #646874;
+  --wr-border: #3d414c;
+  --wr-card-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  --wr-highlight: rgba(245, 158, 11, 0.25);
+}
+
+/* 5. 極致純黑 (OLED) */
+body[data-theme="oled"], .theme-oled {
+  --wr-bg: #121212;
+  --wr-bg-card: #1e1e1e;
+  --wr-bg-subtle: #181818;
+  --wr-bg-elevated: #242424;
+  --wr-text: #929292;
+  --wr-text-secondary: #636363;
+  --wr-text-muted: #4a4a4a;
+  --wr-border: #282828;
+  --wr-card-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --wr-highlight: rgba(217, 119, 6, 0.3);
+}
+
+/* Base Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", "Microsoft YaHei", sans-serif;
+  background-color: var(--wr-bg);
+  color: var(--wr-text);
+  line-height: 1.6;
+  min-height: 100vh;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  user-select: none;
+  overflow-x: hidden;
+}
+
+/* App Container Layout */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  max-width: 680px;
+  margin: 0 auto;
+  position: relative;
+  background-color: var(--wr-bg);
+  box-shadow: 0 0 50px rgba(0, 0, 0, 0.08);
+}
+
+/* Viewport Views */
+.view-panel {
+  display: none;
+  flex: 1;
+  flex-direction: column;
+  padding-bottom: 74px; /* Tab bar height */
+  animation: fadeIn 0.2s ease;
+}
+
+.view-panel.active {
+  display: flex;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ==========================================================================
+   Header Bar (WeChat Read Top Navbar)
+   ========================================================================== */
+.wr-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: calc(var(--wr-safe-top) + 14px) 18px 14px;
+  position: sticky;
+  top: 0;
+  background-color: var(--wr-bg);
+  z-index: 30;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.2s ease;
+}
+
+.wr-header.scrolled {
+  border-bottom-color: var(--wr-border);
+  backdrop-filter: blur(12px);
+}
+
+.wr-header-title {
+  font-size: 20px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  letter-spacing: -0.3px;
+}
+
+.wr-brand-badge {
+  font-size: 11px;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #fff;
+  padding: 2px 7px;
+  border-radius: var(--wr-radius-pill);
+  font-weight: 600;
+}
+
+.wr-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.icon-btn {
+  background: none;
+  border: none;
+  color: var(--wr-text);
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.15s ease;
+}
+
+.icon-btn:hover {
+  background-color: var(--wr-bg-card);
+}
+
+.icon-btn:active {
+  transform: scale(0.92);
+}
+
+.icon-btn svg {
+  width: 21px;
+  height: 21px;
+  stroke-width: 2;
+}
+
+/* ==========================================================================
+   WeChat Read Bookshelf (書架)
+   ========================================================================== */
+.shelf-stats-card {
+  margin: 4px 18px 16px;
+  padding: 14px 18px;
+  background: var(--wr-bg-card);
+  border-radius: var(--wr-radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: var(--wr-shadow-sm);
+  border: 1px solid var(--wr-border);
+}
+
+.stats-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stats-label {
+  font-size: 12px;
+  color: var(--wr-text-secondary);
+}
+
+.stats-val {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--wr-text);
+}
+
+.stats-badge-btn {
+  background-color: var(--wr-bg-elevated);
+  border: 1px solid var(--wr-border);
+  color: var(--wr-text);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: var(--wr-radius-pill);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: var(--wr-transition);
+}
+
+.stats-badge-btn:hover {
+  border-color: var(--wr-primary);
+  color: var(--wr-primary);
+}
+
+/* Shelf Filter & Management Subbar */
+.shelf-subbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 18px 12px;
+}
+
+.shelf-tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.shelf-tab-btn {
+  background: none;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--wr-text-secondary);
+  padding: 5px 12px;
+  border-radius: var(--wr-radius-pill);
+  cursor: pointer;
+  transition: var(--wr-transition);
+}
+
+.shelf-tab-btn.active {
+  background-color: var(--wr-bg-card);
+  color: var(--wr-text);
+}
+
+.shelf-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.action-pill-btn {
+  background: none;
+  border: 1px solid var(--wr-border);
+  color: var(--wr-text-secondary);
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: var(--wr-radius-pill);
+  cursor: pointer;
+}
+
+/* Bookshelf Grid (3D WeChat Read Books) */
+.bookshelf-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px 14px;
+  padding: 6px 18px 24px;
+}
+
+/* Book Cover Card */
+.book-card {
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.book-card:hover {
+  transform: translateY(-4px);
+}
+
+.book-card:active {
+  transform: scale(0.97);
+}
+
+.book-cover {
+  width: 100%;
+  aspect-ratio: 1 / 1.38;
+  border-radius: 8px 10px 10px 8px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 2px 6px 16px rgba(0, 0, 0, 0.16), inset 3px 0 6px rgba(255, 255, 255, 0.15), inset -2px 0 5px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 12px 10px;
+  color: #fff;
+}
+
+/* Simulated Book Spine Ridge on left edge */
+.book-cover::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 6px;
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.35), rgba(255, 255, 255, 0.15) 50%, rgba(0, 0, 0, 0.25));
+  z-index: 2;
+}
+
+.book-cover-title {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.35;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-left: 4px;
+}
+
+.book-cover-meta {
+  margin-left: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.book-cover-author {
+  font-size: 11px;
+  opacity: 0.85;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.book-cover-tag {
+  align-self: flex-start;
+  font-size: 9px;
+  padding: 1px 5px;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(4px);
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+/* Progress bar under cover */
+.book-progress-wrapper {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.book-progress-bar {
+  width: 100%;
+  height: 3px;
+  background-color: var(--wr-border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.book-progress-fill {
+  height: 100%;
+  background: linear-gradient(to right, var(--wr-accent-gold), #f59e0b);
+  border-radius: 2px;
+}
+
+.book-progress-text {
+  font-size: 11px;
+  color: var(--wr-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Add Book Empty Card in Shelf */
+.book-card-add {
+  border: 1.5px dashed var(--wr-border);
+  border-radius: 10px;
+  aspect-ratio: 1 / 1.38;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--wr-text-secondary);
+  cursor: pointer;
+  transition: var(--wr-transition);
+}
+
+.book-card-add:hover {
+  border-color: var(--wr-primary);
+  color: var(--wr-primary);
+  background-color: var(--wr-bg-card);
+}
+
+.book-card-add svg {
+  width: 28px;
+  height: 28px;
+}
+
+.book-card-add span {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Book Card Quick Remove Button */
+.book-card-remove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  opacity: 0;
+  transform: scale(0.85);
+  transition: opacity 0.2s ease, transform 0.2s ease, background 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.book-card:hover .book-card-remove {
+  opacity: 0.92;
+  transform: scale(1);
+}
+
+.book-card-remove:hover {
+  opacity: 1 !important;
+  background: #ef4444 !important;
+  border-color: #ef4444 !important;
+  transform: scale(1.1) !important;
+}
+
+.book-card-remove svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Bookshelf Management Mode */
+.bookshelf-grid.manage-mode .book-card {
+  animation: wr-shelf-shake 0.3s ease-in-out infinite alternate;
+}
+
+.bookshelf-grid.manage-mode .book-card:nth-child(even) {
+  animation-delay: 0.15s;
+}
+
+@keyframes wr-shelf-shake {
+  0% { transform: rotate(-0.8deg) translateY(-2px); }
+  100% { transform: rotate(0.8deg) translateY(-2px); }
+}
+
+.bookshelf-grid.manage-mode .book-card-remove {
+  opacity: 1 !important;
+  transform: scale(1) !important;
+  background: #ef4444;
+  border-color: #fca5a5;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+}
+
+.bookshelf-grid.manage-mode .book-cover {
+  outline: 2px dashed #ef4444;
+  outline-offset: 2px;
+}
+
+#btn-manage-shelf.active {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.4);
+  font-weight: 700;
+}
+
+/* Drag and Drop Zone */
+.bookshelf-grid.drag-over {
+  border: 2px dashed var(--wr-primary);
+  border-radius: var(--wr-radius-lg);
+  background: rgba(37, 99, 235, 0.04);
+}
+
+
+/* ==========================================================================
+   Discover & Search View (發現 & 全網搜書)
+   ========================================================================== */
+.search-container {
+  padding: 8px 18px 14px;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  background-color: var(--wr-bg-card);
+  border: 1px solid var(--wr-border);
+  border-radius: var(--wr-radius-pill);
+  padding: 6px 16px;
+  gap: 10px;
+  transition: var(--wr-transition);
+}
+
+.search-box:focus-within {
+  border-color: var(--wr-primary);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  background-color: var(--wr-bg-elevated);
+}
+
+.search-input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  font-size: 15px;
+  color: var(--wr-text);
+}
+
+.search-input::placeholder {
+  color: var(--wr-text-muted);
+}
+
+.search-btn {
+  background: var(--wr-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--wr-radius-pill);
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.search-btn:hover {
+  background: var(--wr-primary-hover);
+}
+
+/* Search Hot Tags & Sources */
+.search-quick-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.tag-chip {
+  background-color: var(--wr-bg-subtle);
+  border: 1px solid var(--wr-border);
+  color: var(--wr-text-secondary);
+  font-size: 12px;
+  padding: 4px 12px;
+  border-radius: var(--wr-radius-pill);
+  cursor: pointer;
+  transition: var(--wr-transition);
+}
+
+.tag-chip:hover {
+  border-color: var(--wr-primary);
+  color: var(--wr-primary);
+}
+
+.tag-chip.hot {
+  color: #d97706;
+  border-color: rgba(217, 119, 6, 0.3);
+  background-color: rgba(217, 119, 6, 0.08);
+}
+
+/* Search Results List */
+.search-results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 10px 18px 24px;
+}
+
+.result-card {
+  background-color: var(--wr-bg-card);
+  border-radius: var(--wr-radius-md);
+  padding: 14px;
+  display: flex;
+  gap: 14px;
+  border: 1px solid var(--wr-border);
+  transition: var(--wr-transition);
+  cursor: pointer;
+}
+
+.result-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--wr-primary);
+  box-shadow: var(--wr-shadow-sm);
+}
+
+.result-mini-cover {
+  width: 76px;
+  height: 104px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 12px;
+  padding: 8px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.cover-shelf-ribbon {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 5px;
+  border-bottom-left-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  letter-spacing: 0.5px;
+  z-index: 2;
+}
+
+.result-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.result-title {
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.source-badge {
+  font-size: 10px;
+  background-color: var(--wr-bg-elevated);
+  border: 1px solid var(--wr-border);
+  color: var(--wr-text-secondary);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.result-author {
+  font-size: 13px;
+  color: var(--wr-text-secondary);
+  margin-top: 2px;
+}
+
+.result-desc {
+  font-size: 12px;
+  color: var(--wr-text-muted);
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 6px 0;
+}
+
+.result-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-read-now {
+  background: var(--wr-primary);
+  color: #fff;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: var(--wr-radius-pill);
+  cursor: pointer;
+  transition: var(--wr-transition);
+}
+
+.btn-read-now:hover {
+  background: var(--wr-primary-hover);
+}
+
+.btn-add-shelf {
+  background: var(--wr-bg-elevated);
+  border: 1.5px solid var(--wr-border);
+  color: var(--wr-text);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 12px;
+  border-radius: var(--wr-radius-pill);
+  cursor: pointer;
+  transition: var(--wr-transition);
+}
+
+.btn-add-shelf:hover {
+  border-color: var(--wr-primary);
+}
+
+.btn-add-shelf.in-shelf {
+  background-color: rgba(16, 185, 129, 0.12) !important;
+  color: #059669 !important;
+  border-color: rgba(16, 185, 129, 0.45) !important;
+  font-weight: 700;
+}
+
+/* Reader Top Bar & Toolbar Shelf Active Indicators */
+.reader-shelf-toggle-btn {
+  transition: var(--wr-transition);
+}
+
+.reader-shelf-toggle-btn.in-shelf svg {
+  fill: #d97706;
+  stroke: #d97706;
+  filter: drop-shadow(0 0 6px rgba(217, 119, 6, 0.5));
+}
+
+.toolbar-tool-btn.in-shelf {
+  color: #d97706 !important;
+  font-weight: 700;
+}
+
+.toolbar-tool-btn.in-shelf svg {
+  fill: #d97706;
+  stroke: #d97706;
+}
+
+/* ==========================================================================
+   Reader View (沉浸式小說閱讀器)
+   ========================================================================== */
+.reader-viewport {
+  position: fixed;
+  inset: 0;
+  background-color: var(--wr-bg);
+  z-index: 100;
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.reader-viewport.active {
+  display: flex;
+}
+
+/* Reader Top Navigation Bar (Hidden by default, shown on tap) */
+.reader-top-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: calc(var(--wr-safe-top) + 10px) 16px 12px;
+  background: var(--wr-bg);
+  border-bottom: 1px solid var(--wr-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transform: translateY(-100%);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 110;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.reader-top-bar.visible {
+  transform: translateY(0);
+}
+
+.reader-title-container {
+  flex: 1;
+  text-align: center;
+  padding: 0 10px;
+}
+
+.reader-book-title {
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.reader-chapter-title-top {
+  font-size: 11px;
+  color: var(--wr-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Reader Content Scroll Container */
+.reader-content-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: calc(var(--wr-safe-top) + 24px) 24px calc(var(--wr-safe-bottom) + 50px);
+  max-width: 720px;
+  margin: 0 auto;
+  width: 100%;
+  scroll-behavior: smooth;
+  user-select: text;
+}
+
+/* Reader Typography Styles */
+.reader-chapter-heading {
+  font-size: 24px;
+  font-weight: 800;
+  margin-bottom: 24px;
+  line-height: 1.35;
+  color: var(--wr-text);
+  border-bottom: 1px solid var(--wr-border);
+  padding-bottom: 12px;
+}
+
+.reader-paragraph {
+  text-indent: 2em;
+  margin-bottom: 1.4em;
+  line-height: var(--reader-line-height, 1.85);
+  font-size: var(--reader-font-size, 18px);
+  color: var(--wr-text);
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  border-radius: 4px;
+  padding: 2px 4px;
+}
+
+/* Synchronized Active Reading Paragraph (Audio Listening mode) */
+.reader-paragraph.speaking-active {
+  background-color: var(--wr-highlight);
+  box-shadow: 0 0 0 2px var(--wr-highlight);
+  position: relative;
+  font-weight: 500;
+}
+
+/* Font Family Classes */
+.font-system {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif;
+}
+.font-serif {
+  font-family: "Noto Serif SC", "Songti SC", "SimSun", "STSong", serif;
+}
+.font-kaiti {
+  font-family: "KaiTi", "STKaiti", "BiauKai", serif;
+}
+
+/* Bottom Chapter Navigation Buttons inside Content */
+.reader-chapter-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 40px 0 20px;
+}
+
+.reader-action-btn {
+  flex: 1;
+  background-color: var(--wr-bg-card);
+  border: 1px solid var(--wr-border);
+  color: var(--wr-text);
+  padding: 12px;
+  border-radius: var(--wr-radius-pill);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--wr-transition);
+}
+
+.reader-action-btn:hover {
+  background-color: var(--wr-bg-elevated);
+  border-color: var(--wr-primary);
+}
+
+/* Reader Bottom Status Bar (Always visible during reading - WeChat Read classic) */
+.reader-status-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: calc(var(--wr-safe-bottom) + 32px);
+  padding: 0 24px var(--wr-safe-bottom);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  color: var(--wr-text-muted);
+  background: linear-gradient(to top, var(--wr-bg) 60%, transparent);
+  pointer-events: none;
+  z-index: 105;
+}
+
+/* Reader Bottom Control Bar (Hidden by default, shown on tap) */
+.reader-bottom-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--wr-bg);
+  border-top: 1px solid var(--wr-border);
+  padding: 10px 18px calc(var(--wr-safe-bottom) + 10px);
+  transform: translateY(100%);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 110;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.reader-bottom-bar.visible {
+  transform: translateY(0);
+}
+
+/* Slider Bar for Chapter Progress */
+.reader-progress-slider-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 10px 12px;
+}
+
+.progress-slider-btn {
+  background: none;
+  border: none;
+  color: var(--wr-text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.slider-input {
+  flex: 1;
+  accent-color: var(--wr-primary);
+  height: 4px;
+  cursor: pointer;
+}
+
+/* Bottom 4 Essential Controls: 目錄, 進度, 聽書, 設定 */
+.reader-toolbar-buttons {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+}
+
+.toolbar-tool-btn {
+  background: none;
+  border: none;
+  color: var(--wr-text);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 6px 14px;
+  border-radius: var(--wr-radius-sm);
+  transition: background-color 0.2s ease;
+}
+
+.toolbar-tool-btn:hover {
+  background-color: var(--wr-bg-card);
+}
+
+.toolbar-tool-btn svg {
+  width: 22px;
+  height: 22px;
+}
+
+/* ==========================================================================
+   TOC Drawer (目錄側邊欄)
+   ========================================================================== */
+.toc-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+  display: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.toc-drawer-overlay.active {
+  display: block;
+  opacity: 1;
+}
+
+.toc-drawer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 82%;
+  max-width: 380px;
+  background-color: var(--wr-bg);
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  transform: translateX(-100%);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.toc-drawer-overlay.active .toc-drawer {
+  transform: translateX(0);
+}
+
+.toc-header {
+  padding: calc(var(--wr-safe-top) + 16px) 18px 12px;
+  border-bottom: 1px solid var(--wr-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.toc-title {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.toc-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.toc-item {
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+  color: var(--wr-text);
+  border-bottom: 1px solid var(--wr-border);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.toc-item:hover {
+  background-color: var(--wr-bg-card);
+}
+
+.toc-item.current {
+  color: var(--wr-primary);
+  font-weight: 700;
+  background-color: var(--wr-bg-card);
+}
+
+.toc-badge {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--wr-primary);
+}
+
+/* ==========================================================================
+   Reader Settings Sheet (外觀設定面板)
+   ========================================================================== */
+.settings-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 200;
+  display: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.settings-sheet-overlay.active {
+  display: flex;
+  opacity: 1;
+  align-items: flex-end;
+}
+
+.settings-sheet {
+  width: 100%;
+  max-width: 680px;
+  margin: 0 auto;
+  background-color: var(--wr-bg);
+  border-radius: var(--wr-radius-lg) var(--wr-radius-lg) 0 0;
+  padding: 20px 20px calc(var(--wr-safe-bottom) + 20px);
+  box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  border-top: 1px solid var(--wr-border);
+}
+
+.settings-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--wr-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Font Size Selector */
+.font-size-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background-color: var(--wr-bg-card);
+  padding: 8px 16px;
+  border-radius: var(--wr-radius-pill);
+}
+
+.font-size-btn {
+  background: none;
+  border: none;
+  color: var(--wr-text);
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.font-size-display {
+  flex: 1;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--wr-text);
+}
+
+/* Theme Selector Chips (5 Colors) */
+.theme-selector-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+}
+
+.theme-chip-btn {
+  aspect-ratio: 1;
+  border-radius: var(--wr-radius-md);
+  border: 2px solid transparent;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  transition: transform 0.2s, border-color 0.2s;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.theme-chip-btn.active {
+  border-color: var(--wr-primary);
+  transform: scale(1.05);
+}
+
+.theme-chip-btn.mini {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Font Family & Spacing segmented controls */
+.segmented-control {
+  display: flex;
+  background-color: var(--wr-bg-card);
+  padding: 4px;
+  border-radius: var(--wr-radius-pill);
+  gap: 4px;
+}
+
+.segment-item-btn {
+  flex: 1;
+  background: none;
+  border: none;
+  color: var(--wr-text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px;
+  border-radius: var(--wr-radius-pill);
+  cursor: pointer;
+  transition: var(--wr-transition);
+}
+
+.segment-item-btn.active {
+  background-color: var(--wr-bg-elevated);
+  color: var(--wr-text);
+  box-shadow: var(--wr-shadow-sm);
+}
+
+/* ==========================================================================
+   AI Audio Novel Mode (微信讀書 AI 聽書)
+   ========================================================================== */
+
+/* Mini Floating Audio Capsule (Bottom right) */
+.audio-mini-pill {
+  position: fixed;
+  bottom: calc(var(--wr-safe-bottom) + 84px);
+  right: 18px;
+  background: var(--wr-bg-elevated);
+  border: 1px solid var(--wr-border);
+  box-shadow: var(--wr-shadow-lg);
+  border-radius: var(--wr-radius-pill);
+  padding: 6px 14px 6px 6px;
+  display: none;
+  align-items: center;
+  gap: 10px;
+  z-index: 150;
+  cursor: pointer;
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.2s;
+}
+
+.audio-mini-pill:hover {
+  transform: scale(1.04);
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* Vinyl Disc Spinning Animation */
+.mini-disc {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: conic-gradient(#111, #333, #111, #444, #111);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  animation: spin 8s linear infinite;
+  animation-play-state: paused;
+}
+
+.mini-disc.playing {
+  animation-play-state: running;
+}
+
+.mini-disc-center {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--wr-accent-gold);
+  border: 2px solid #fff;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.mini-pill-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.mini-pill-title {
+  font-size: 12px;
+  font-weight: 700;
+  max-width: 120px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mini-pill-status {
+  font-size: 10px;
+  color: var(--wr-text-secondary);
+}
+
+/* Full-Screen Audio Player Modal */
+.audio-player-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(10px);
+  z-index: 250;
+  display: none;
+  align-items: flex-end;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.audio-player-modal.active {
+  display: flex;
+  opacity: 1;
+}
+
+.audio-player-sheet {
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  background-color: var(--wr-bg);
+  border-radius: var(--wr-radius-lg) var(--wr-radius-lg) 0 0;
+  padding: 24px 24px calc(var(--wr-safe-bottom) + 24px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.35);
+  animation: slideInSheet 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideInSheet {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+/* Vinyl Disc Big Center */
+.audio-big-disc {
+  width: 170px;
+  height: 170px;
+  border-radius: 50%;
+  background: conic-gradient(#111, #282828, #111, #383838, #111);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35), 0 0 0 8px rgba(255, 255, 255, 0.05);
+  position: relative;
+  animation: spin 16s linear infinite;
+  animation-play-state: paused;
+}
+
+.audio-big-disc.playing {
+  animation-play-state: running;
+}
+
+.audio-big-cover {
+  width: 78px;
+  height: 78px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 800;
+  font-size: 13px;
+  text-align: center;
+  padding: 4px;
+}
+
+/* Acoustic Equalizer Bars */
+.audio-equalizer {
+  display: flex;
+  gap: 4px;
+  align-items: flex-end;
+  height: 24px;
+}
+
+.eq-bar {
+  width: 3px;
+  height: 4px;
+  background-color: var(--wr-accent-gold);
+  border-radius: 2px;
+  transition: height 0.15s ease;
+}
+
+.audio-big-disc.playing ~ .audio-equalizer .eq-bar:nth-child(1) { animation: eqJump 0.8s infinite 0.1s; }
+.audio-big-disc.playing ~ .audio-equalizer .eq-bar:nth-child(2) { animation: eqJump 0.6s infinite 0.2s; }
+.audio-big-disc.playing ~ .audio-equalizer .eq-bar:nth-child(3) { animation: eqJump 0.9s infinite 0.0s; }
+.audio-big-disc.playing ~ .audio-equalizer .eq-bar:nth-child(4) { animation: eqJump 0.7s infinite 0.3s; }
+.audio-big-disc.playing ~ .audio-equalizer .eq-bar:nth-child(5) { animation: eqJump 0.5s infinite 0.15s; }
+
+@keyframes eqJump {
+  0%, 100% { height: 6px; }
+  50% { height: 22px; }
+}
+
+/* Audio Synchronized Sentence Prompter */
+.audio-teleprompter {
+  width: 100%;
+  max-height: 80px;
+  overflow: hidden;
+  text-align: center;
+  padding: 0 16px;
+}
+
+.teleprompter-text {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--wr-text);
+  animation: fadeIn 0.2s ease;
+}
+
+/* Audio Player Main Buttons */
+.audio-controls-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  width: 100%;
+}
+
+.btn-audio-ctrl {
+  background: none;
+  border: none;
+  color: var(--wr-text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.btn-audio-ctrl:hover {
+  background-color: var(--wr-bg-card);
+}
+
+.btn-audio-play-big {
+  width: 64px;
+  height: 64px;
+  background: var(--wr-primary);
+  color: #fff;
+  border-radius: 50%;
+  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+}
+
+.btn-audio-play-big:hover {
+  background: var(--wr-primary-hover);
+  transform: scale(1.05);
+}
+
+/* Secondary Audio Buttons: 聲音, 語速, 定時關閉 */
+.audio-meta-row {
+  display: flex;
+  justify-content: space-around;
+  width: 100%;
+  border-top: 1px solid var(--wr-border);
+  padding-top: 16px;
+}
+
+.audio-meta-btn {
+  background: none;
+  border: none;
+  color: var(--wr-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  padding: 6px 14px;
+  border-radius: var(--wr-radius-sm);
+}
+
+.audio-meta-btn:hover {
+  color: var(--wr-text);
+  background-color: var(--wr-bg-card);
+}
+
+/* Voice Selection Modal / Sheet */
+.voice-picker-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 300;
+  display: none;
+  align-items: flex-end;
+}
+
+.voice-picker-modal.active {
+  display: flex;
+}
+
+.voice-picker-sheet {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  background-color: var(--wr-bg);
+  border-radius: var(--wr-radius-lg) var(--wr-radius-lg) 0 0;
+  padding: 20px;
+  max-height: 70vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.voice-list-container {
+  overflow-y: auto;
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.voice-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background-color: var(--wr-bg-card);
+  border-radius: var(--wr-radius-md);
+  border: 1px solid var(--wr-border);
+  color: var(--wr-text);
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  transition: var(--wr-transition);
+}
+
+.voice-item:hover {
+  border-color: var(--wr-primary);
+}
+
+.voice-item.selected {
+  border-color: var(--wr-primary);
+  background-color: var(--wr-bg-elevated);
+}
+
+/* ==========================================================================
+   Sleep Timer (定時關閉) WeChat Read Premium Styling
+   ========================================================================== */
+.timer-picker-sheet {
+  width: 100%;
+  max-width: 540px;
+  margin: 0 auto;
+  background-color: var(--wr-bg);
+  border-radius: var(--wr-radius-lg) var(--wr-radius-lg) 0 0;
+  padding: 20px 20px calc(var(--wr-safe-bottom) + 20px);
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 -12px 36px rgba(0, 0, 0, 0.25);
+  animation: slideInSheet 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  color: var(--wr-text);
+  overflow-y: auto;
+}
+
+/* Big Live Digital Countdown Display Card */
+.timer-active-card {
+  background: linear-gradient(135deg, rgba(217, 119, 6, 0.14), rgba(245, 158, 11, 0.08));
+  border: 1.5px solid rgba(217, 119, 6, 0.4);
+  border-radius: var(--wr-radius-md);
+  padding: 16px 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.2s ease;
+}
+
+.timer-active-card.inactive {
+  background: var(--wr-bg-card);
+  border: 1px solid var(--wr-border);
+}
+
+.timer-active-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #d97706;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  letter-spacing: 0.5px;
+}
+
+.timer-display-big {
+  font-size: 40px;
+  font-weight: 800;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+  font-variant-numeric: tabular-nums;
+  color: #d97706;
+  letter-spacing: 2px;
+  line-height: 1.1;
+  margin: 6px 0;
+  text-shadow: 0 2px 10px rgba(217, 119, 6, 0.25);
+}
+
+.timer-active-sub {
+  font-size: 12px;
+  color: var(--wr-text-secondary);
+}
+
+.timer-cancel-btn {
+  margin-top: 8px;
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  padding: 6px 18px;
+  border-radius: var(--wr-radius-pill);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--wr-transition);
+}
+
+.timer-cancel-btn:hover {
+  background: #ef4444;
+  color: #fff;
+}
+
+/* Preset Options Grid (WeChat Read Clean Cards) */
+.timer-presets-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.timer-preset-btn {
+  background-color: var(--wr-bg-card);
+  border: 1.5px solid var(--wr-border);
+  border-radius: var(--wr-radius-md);
+  padding: 12px 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: var(--wr-transition);
+  color: var(--wr-text);
+  font-family: inherit;
+}
+
+.timer-preset-btn:hover {
+  border-color: var(--wr-primary);
+  background-color: var(--wr-bg-elevated);
+  transform: translateY(-1px);
+}
+
+.timer-preset-btn.selected {
+  border-color: #d97706;
+  background-color: rgba(217, 119, 6, 0.14);
+  color: #d97706;
+  box-shadow: 0 0 0 1px #d97706;
+  font-weight: 700;
+}
+
+.timer-btn-num {
+  font-size: 24px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: inherit;
+}
+
+.timer-btn-unit {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--wr-text-secondary);
+}
+
+.timer-preset-btn.selected .timer-btn-unit {
+  color: #d97706;
+  font-weight: 700;
+}
+
+.timer-preset-btn.chapter-btn {
+  grid-column: span 3;
+  flex-direction: row;
+  gap: 10px;
+  padding: 12px 16px;
+  justify-content: space-between;
+}
+
+/* Custom Minutes Input Section */
+.timer-custom-box {
+  background-color: var(--wr-bg-card);
+  border: 1px solid var(--wr-border);
+  border-radius: var(--wr-radius-md);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.timer-stepper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background-color: var(--wr-bg);
+  border: 1px solid var(--wr-border);
+  border-radius: var(--wr-radius-pill);
+  padding: 3px 8px;
+}
+
+.stepper-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: var(--wr-bg-card);
+  color: var(--wr-text);
+  font-size: 16px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--wr-transition);
+}
+
+.stepper-btn:hover {
+  background: var(--wr-primary);
+  color: #fff;
+}
+
+.stepper-input {
+  width: 44px;
+  text-align: center;
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--wr-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.stepper-input:focus {
+  outline: none;
+}
+
+.btn-apply-timer {
+  background: var(--wr-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--wr-radius-pill);
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--wr-transition);
+  white-space: nowrap;
+}
+
+.btn-apply-timer:hover {
+  background: var(--wr-primary-hover);
+}
+
+/* Audio Player Timer Button Active Highlighting */
+.audio-meta-btn.timer-active {
+  color: #d97706 !important;
+  background: rgba(217, 119, 6, 0.12);
+  border: 1px solid rgba(217, 119, 6, 0.35);
+}
+
+/* ==========================================================================
+   Bottom Navigation Bar (微信讀書主介面底欄)
+   ========================================================================== */
+.wr-tabbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-width: 680px;
+  margin: 0 auto;
+  background-color: var(--wr-bg);
+  border-top: 1px solid var(--wr-border);
+  padding: 6px 16px calc(var(--wr-safe-bottom) + 6px);
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  z-index: 40;
+  backdrop-filter: blur(16px);
+}
+
+.tabbar-item {
+  background: none;
+  border: none;
+  color: var(--wr-text-secondary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 18px;
+  border-radius: var(--wr-radius-md);
+  cursor: pointer;
+  transition: var(--wr-transition);
+}
+
+.tabbar-item.active {
+  color: var(--wr-primary);
+}
+
+.tabbar-item svg {
+  width: 22px;
+  height: 22px;
+}
+
+/* Toast Message Pill */
+.wr-toast {
+  position: fixed;
+  top: calc(var(--wr-safe-top) + 20px);
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  background-color: rgba(20, 20, 20, 0.9);
+  color: #fff;
+  padding: 8px 18px;
+  border-radius: var(--wr-radius-pill);
+  font-size: 13px;
+  font-weight: 500;
+  z-index: 999;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  transition: opacity 0.25s, transform 0.25s;
+  pointer-events: none;
+}
+
+.wr-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}

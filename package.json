@@ -1,0 +1,11 @@
+{
+  "name": "weread-novel-reader",
+  "version": "1.0.0",
+  "description": "WeChat Read Style Online Novel Reader with Multi-source Search, Multi-voice TTS Audio, and Progress Sync",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "author": "Antigravity",
+  "license": "MIT"
+}
