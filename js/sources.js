@@ -368,6 +368,17 @@ class NovelSourcesService {
     this.localBooks = [...BUILTIN_NOVELS];
   }
 
+  // Get current backend API base URL (empty for same-origin, or custom cloud URL)
+  getApiBaseUrl() {
+    try {
+      const custom = localStorage.getItem('wr_api_base');
+      if (custom && custom.trim()) {
+        return custom.trim().replace(/\/+$/, '');
+      }
+    } catch (e) {}
+    return '';
+  }
+
   // Search across built-in library and live web scraper API
   async search(keyword) {
     keyword = (keyword || '').trim();
@@ -403,9 +414,10 @@ class NovelSourcesService {
 
     // 2. Search Live Web API (if server is running)
     try {
+      const apiBase = this.getApiBaseUrl();
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 4000);
-      const res = await fetch(`/api/search?q=${encodeURIComponent(keyword)}`, {
+      const res = await fetch(`${apiBase}/api/search?q=${encodeURIComponent(keyword)}`, {
         signal: controller.signal
       });
       clearTimeout(timeoutId);
@@ -451,7 +463,8 @@ class NovelSourcesService {
     // 2. Fetch via server catalog API with detailUrl
     if (detailUrl) {
       try {
-        const res = await fetch(`/api/book-catalog?url=${encodeURIComponent(detailUrl)}`);
+        const apiBase = this.getApiBaseUrl();
+        const res = await fetch(`${apiBase}/api/book-catalog?url=${encodeURIComponent(detailUrl)}`);
         if (res.ok) {
           const data = await res.json();
           if (data.success && Array.isArray(data.chapters) && data.chapters.length > 0) {
@@ -485,7 +498,8 @@ class NovelSourcesService {
         if (searchResults && searchResults.length > 0) {
           const matched = searchResults.find(b => b.detailUrl) || searchResults[0];
           if (matched && matched.detailUrl) {
-            const res2 = await fetch(`/api/book-catalog?url=${encodeURIComponent(matched.detailUrl)}`);
+            const apiBase = this.getApiBaseUrl();
+            const res2 = await fetch(`${apiBase}/api/book-catalog?url=${encodeURIComponent(matched.detailUrl)}`);
             if (res2.ok) {
               const data2 = await res2.json();
               if (data2.success && Array.isArray(data2.chapters) && data2.chapters.length > 0) {
@@ -534,7 +548,8 @@ class NovelSourcesService {
     // Fetch from chapter url via proxy
     if (chapter.url) {
       try {
-        const res = await fetch(`/api/chapter-content?url=${encodeURIComponent(chapter.url)}`);
+        const apiBase = this.getApiBaseUrl();
+        const res = await fetch(`${apiBase}/api/chapter-content?url=${encodeURIComponent(chapter.url)}`);
         if (res.ok) {
           const data = await res.json();
           if (data.success && data.content) {

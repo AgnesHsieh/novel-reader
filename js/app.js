@@ -1488,6 +1488,68 @@ class NovelApp {
         location.reload();
       }
     });
+
+    // Backend API Server Configuration
+    const updateApiStatusUI = () => {
+      const statusEl = document.getElementById('profile-api-status');
+      const current = localStorage.getItem('wr_api_base');
+      if (statusEl) {
+        if (current && current.trim()) {
+          statusEl.textContent = `自訂雲端: ${current.trim()}`;
+          statusEl.style.color = 'var(--wr-primary)';
+        } else if (location.hostname.includes('github.io')) {
+          statusEl.textContent = '靜態網站模式（可點選設定雲端後端）';
+          statusEl.style.color = '#eab308';
+        } else {
+          statusEl.textContent = '預設同源模式';
+          statusEl.style.color = 'var(--wr-text-secondary)';
+        }
+      }
+    };
+    updateApiStatusUI();
+
+    this.on('btn-profile-api', 'click', () => {
+      const modal = document.getElementById('modal-api-server');
+      const input = document.getElementById('input-api-url');
+      if (input) {
+        input.value = localStorage.getItem('wr_api_base') || '';
+      }
+      if (modal) modal.classList.add('active');
+    });
+
+    this.on('btn-close-api-modal', 'click', () => {
+      const modal = document.getElementById('modal-api-server');
+      if (modal) modal.classList.remove('active');
+    });
+
+    this.on('btn-save-api-url', 'click', () => {
+      const input = document.getElementById('input-api-url');
+      const val = input ? input.value.trim() : '';
+      if (val) {
+        let clean = val.replace(/\/+$/, '');
+        if (!clean.startsWith('http://') && !clean.startsWith('https://')) {
+          clean = 'https://' + clean;
+        }
+        localStorage.setItem('wr_api_base', clean);
+        this.showToast('後端伺服器網址已更新！');
+      } else {
+        localStorage.removeItem('wr_api_base');
+        this.showToast('已重設為預設模式');
+      }
+      const modal = document.getElementById('modal-api-server');
+      if (modal) modal.classList.remove('active');
+      updateApiStatusUI();
+    });
+
+    this.on('btn-reset-api-url', 'click', () => {
+      localStorage.removeItem('wr_api_base');
+      const input = document.getElementById('input-api-url');
+      if (input) input.value = '';
+      this.showToast('已重設為預設模式');
+      const modal = document.getElementById('modal-api-server');
+      if (modal) modal.classList.remove('active');
+      updateApiStatusUI();
+    });
   }
 
   escapeHtml(str) {

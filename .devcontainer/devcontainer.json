@@ -1,0 +1,12 @@
+{
+  "name": "WeRead Novel Reader (墨韻小說閱讀器)",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:18",
+  "forwardPorts": [3001],
+  "portsAttributes": {
+    "3001": {
+      "label": "墨韻小說閱讀器 Web",
+      "onAutoForward": "openBrowser"
+    }
+  },
+  "postStartCommand": "node server.js"
+}
