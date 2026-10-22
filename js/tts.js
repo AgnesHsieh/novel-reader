@@ -302,31 +302,47 @@ class NovelTTSEngine {
     }
   }
 
-  // Load chapter text with intelligent sentence chunking
+  // Load chapter text with intelligent sentence chunking and 100% accurate DOM paragraph mapping
   loadText(chapterTitle, textContent, startIndex = 0) {
     this.stop();
     const cleanTitle = typeof ChineseConv !== 'undefined' && ChineseConv.decodePua ? ChineseConv.decodePua(chapterTitle || '') : (chapterTitle || '');
     const cleanBody = typeof ChineseConv !== 'undefined' && ChineseConv.decodePua ? ChineseConv.decodePua(textContent || '') : (textContent || '');
-    const rawLines = cleanBody.split(/\r?\n+/);
+    const rawLines = cleanBody.split(/\r?\n+/).map(l => l.trim()).filter(Boolean);
     const cleaned = [];
 
     if (cleanTitle) {
       const t = cleanTitle.replace(/[\uE000-\uF8FF\uFFF0-\uFFFF\u200B-\u200D\uFEFF]/g, '').trim();
-      if (t) cleaned.push(t);
+      if (t) {
+        cleaned.push({
+          text: t,
+          paraIdx: -1, // -1 denotes chapter heading
+          isHeading: true
+        });
+      }
     }
 
-    for (const line of rawLines) {
+    rawLines.forEach((line, pIdx) => {
       const trimmed = line.replace(/[\uE000-\uF8FF\uFFF0-\uFFFF\u200B-\u200D\uFEFF]/g, '').trim();
       if (trimmed.length > 0) {
         // Chunk long paragraphs into natural sentences (< 140 chars) to prevent mobile audio buffer clipping
         if (trimmed.length > 140) {
           const sentences = trimmed.match(/[^。！？…]+[。！？…]?/g) || [trimmed];
-          cleaned.push(...sentences.map(s => s.trim()).filter(Boolean));
+          sentences.map(s => s.trim()).filter(Boolean).forEach((s) => {
+            cleaned.push({
+              text: s,
+              paraIdx: pIdx,
+              isHeading: false
+            });
+          });
         } else {
-          cleaned.push(trimmed);
+          cleaned.push({
+            text: trimmed,
+            paraIdx: pIdx,
+            isHeading: false
+          });
         }
       }
-    }
+    });
 
     this.paragraphs = cleaned;
     this.currentParaIndex = Math.min(startIndex, Math.max(0, cleaned.length - 1));
@@ -386,12 +402,15 @@ class NovelTTSEngine {
       return;
     }
 
-    let text = this.paragraphs[this.currentParaIndex];
+    const currentItem = this.paragraphs[this.currentParaIndex];
+    let rawText = typeof currentItem === 'object' ? currentItem.text : currentItem;
+    const domParaIdx = typeof currentItem === 'object' ? currentItem.paraIdx : this.currentParaIndex;
+
     if (typeof ChineseConv !== 'undefined' && ChineseConv.decodePua) {
-      text = ChineseConv.decodePua(text);
+      rawText = ChineseConv.decodePua(rawText);
     }
     // Clean invisible/corrupt characters and replace heavy quotes with natural pauses
-    text = (text || '')
+    let text = (rawText || '')
       .replace(/[\uE000-\uF8FF\uFFF0-\uFFFF\u200B-\u200D\uFEFF]/g, '')
       .replace(/[「」『』“”""]/g, '，')
       .trim();
@@ -420,7 +439,7 @@ class NovelTTSEngine {
 
     utter.onstart = () => {
       if (this.onParagraphChange) {
-        this.onParagraphChange(this.currentParaIndex, text);
+        this.onParagraphChange(this.currentParaIndex, text, domParaIdx);
       }
     };
 
@@ -454,29 +473,72 @@ class NovelTTSEngine {
     this.synth.speak(utter);
   }
 
-  jumpToParagraph(index) {
+  // Jump to specific DOM paragraph index (or -1 for chapter heading)
+  jumpToParagraph(targetParaIdx) {
+    if (this.paragraphs.length === 0) return;
+
+    let targetAudioIdx = 0;
+    if (targetParaIdx === -1) {
+      targetAudioIdx = 0;
+    } else if (typeof targetParaIdx === 'number') {
+      const idx = this.paragraphs.findIndex(p => p.paraIdx === targetParaIdx);
+      if (idx !== -1) {
+        targetAudioIdx = idx;
+      } else {
+        // Fallback: closest paragraph
+        const closest = this.paragraphs.findIndex(p => p.paraIdx >= targetParaIdx);
+        targetAudioIdx = closest !== -1 ? closest : Math.max(0, this.paragraphs.length - 1);
+      }
+    }
+
+    this.currentParaIndex = targetAudioIdx;
+    const currentItem = this.paragraphs[this.currentParaIndex];
+    const text = typeof currentItem === 'object' ? currentItem.text : currentItem;
+    const domParaIdx = typeof currentItem === 'object' ? currentItem.paraIdx : this.currentParaIndex;
+
+    if (this.isPlaying) {
+      this.speakCurrentParagraph(true);
+    } else {
+      if (this.onParagraphChange) {
+        this.onParagraphChange(this.currentParaIndex, text, domParaIdx);
+      }
+    }
+  }
+
+  // Jump to audio sentence item directly
+  jumpToAudioIndex(index) {
     if (index >= 0 && index < this.paragraphs.length) {
       this.currentParaIndex = index;
+      const currentItem = this.paragraphs[this.currentParaIndex];
+      const text = typeof currentItem === 'object' ? currentItem.text : currentItem;
+      const domParaIdx = typeof currentItem === 'object' ? currentItem.paraIdx : this.currentParaIndex;
+
       if (this.isPlaying) {
         this.speakCurrentParagraph(true);
       } else {
         if (this.onParagraphChange) {
-          this.onParagraphChange(this.currentParaIndex, this.paragraphs[this.currentParaIndex]);
+          this.onParagraphChange(this.currentParaIndex, text, domParaIdx);
         }
       }
     }
   }
 
-  nextParagraph() {
-    if (this.currentParaIndex < this.paragraphs.length - 1) {
-      this.jumpToParagraph(this.currentParaIndex + 1);
+  getCurrentDomParaIndex() {
+    if (this.currentParaIndex >= 0 && this.currentParaIndex < this.paragraphs.length) {
+      const item = this.paragraphs[this.currentParaIndex];
+      return typeof item === 'object' ? item.paraIdx : this.currentParaIndex;
     }
+    return 0;
+  }
+
+  nextParagraph() {
+    const curDom = this.getCurrentDomParaIndex();
+    this.jumpToParagraph(curDom + 1);
   }
 
   prevParagraph() {
-    if (this.currentParaIndex > 0) {
-      this.jumpToParagraph(this.currentParaIndex - 1);
-    }
+    const curDom = this.getCurrentDomParaIndex();
+    this.jumpToParagraph(Math.max(-1, curDom - 1));
   }
 
   // Sleep Timer (Minutes: 15, 30, 45, 60, custom, or 'chapter')

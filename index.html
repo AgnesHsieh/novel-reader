@@ -14,7 +14,7 @@
   <link rel="manifest" href="manifest.json">
 
   <!-- Stylesheets -->
-  <link rel="stylesheet" href="css/reader.css?v=222">
+  <link rel="stylesheet" href="css/reader.css?v=230">
 
   <!-- PDF.js Engine (Mozilla Client-side PDF Parser) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -29,6 +29,11 @@
         <span class="wr-brand-badge">WeRead</span>
       </div>
       <div class="wr-header-actions">
+        <button id="btn-header-sync" class="icon-btn" aria-label="本機書架即時同步" title="與本機伺服器 (192.168.0.114:3001) 同步">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+          </svg>
+        </button>
         <button id="btn-quick-search" class="icon-btn" aria-label="全網搜尋小說" title="全網搜尋小說">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
@@ -44,14 +49,6 @@
 
     <!-- VIEW 1: 書架 (Bookshelf) -->
     <main id="view-shelf" class="view-panel active">
-      <!-- Reading stats card (WeChat Read signature header) -->
-      <section class="shelf-stats-card">
-        <div class="stats-info">
-          <span class="stats-label">本週閱讀時長</span>
-          <span class="stats-val" id="shelf-stats-val">0 小時 0 分鐘</span>
-        </div>
-      </section>
-
       <!-- Subbar: Filter Tabs & Manage -->
       <section class="shelf-subbar">
         <div class="shelf-tabs">
@@ -128,8 +125,11 @@
         <!-- Stats Overview Cards -->
         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 24px;">
           <div style="background: var(--wr-bg-card); padding: 14px; border-radius: var(--wr-radius-md); border: 1px solid var(--wr-border);">
-            <div style="font-size: 12px; color: var(--wr-text-secondary);">累計閱讀時長</div>
-            <div id="stat-total-time" style="font-size: 20px; font-weight: 800; color: var(--wr-primary); margin-top: 4px;">4 小時 15 分</div>
+            <div style="font-size: 12px; color: var(--wr-text-secondary);">本機同步中心</div>
+            <div id="stat-sync-status" style="font-size: 13.5px; font-weight: 700; color: #10b981; margin-top: 6px; display: flex; align-items: center; gap: 4px;">
+              <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #10b981;"></span>
+              192.168.0.114
+            </div>
           </div>
           <div style="background: var(--wr-bg-card); padding: 14px; border-radius: var(--wr-radius-md); border: 1px solid var(--wr-border);">
             <div style="font-size: 12px; color: var(--wr-text-secondary);">書架藏書</div>
@@ -183,6 +183,13 @@
               <div id="profile-api-status" style="font-size: 11px; color: var(--wr-text-secondary); margin-top: 2px;">預設同源模式</div>
             </div>
             <button id="btn-profile-api" class="action-pill-btn">設定網址</button>
+          </div>
+          <div style="padding: 14px 18px; border-bottom: 1px solid var(--wr-border); display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-size: 14px; font-weight: 600;">本機伺服器雙向同步</div>
+              <div style="font-size: 11px; color: var(--wr-text-secondary); margin-top: 2px;">與電腦 192.168.0.114:3001 即時同步書架與進度</div>
+            </div>
+            <button id="btn-sync-now" class="action-pill-btn" style="color: var(--wr-primary); border-color: var(--wr-primary); font-weight: 700;">立即同步</button>
           </div>
           <div style="padding: 14px 18px; border-bottom: 1px solid var(--wr-border); display: flex; justify-content: space-between; align-items: center;">
             <div>
@@ -279,6 +286,16 @@
         <button id="btn-next-chapter" class="reader-action-btn">下一章 →</button>
       </div>
     </main>
+
+    <!-- Floating Quick Read from Paragraph Pill -->
+    <div id="para-quick-action" class="para-quick-action">
+      <button id="btn-para-start-read" class="para-quick-btn" title="從此處開始朗讀">
+        <svg viewBox="0 0 24 24" fill="currentColor" style="width: 13px; height: 13px;">
+          <path d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />
+        </svg>
+        <span>從此處朗讀</span>
+      </button>
+    </div>
 
     <!-- Subtle Reading Status Bar (Always visible at bottom during reading) -->
     <div class="reader-status-bar" id="reader-status-bar">
@@ -656,11 +673,11 @@
   <div id="wr-toast" class="wr-toast">已更新閱讀進度</div>
 
   <!-- Scripts -->
-  <script src="js/chinese_conv.js?v=222"></script>
-  <script src="js/sources.js?v=222"></script>
-  <script src="js/db.js?v=222"></script>
-  <script src="js/tts.js?v=222"></script>
-  <script src="js/app.js?v=222"></script>
+  <script src="js/chinese_conv.js?v=230"></script>
+  <script src="js/sources.js?v=230"></script>
+  <script src="js/db.js?v=230"></script>
+  <script src="js/tts.js?v=230"></script>
+  <script src="js/app.js?v=230"></script>
 
   <!-- Service Worker Registration for PWA & Offline Access -->
   <script>

@@ -22,13 +22,10 @@ class NovelApp {
       this.updateStatsUI();
       this.setupTTSEventHooks();
 
-      // Auto-update reading time every 30 seconds
-      setInterval(() => {
-        if (this.currentBook) {
-          novelDB.recordReadingTime(30);
-          this.updateStatsUI();
-        }
-      }, 30000);
+      // Auto-sync with local server (192.168.0.114:3001) on startup
+      setTimeout(() => {
+        this.syncWithLocalServer(true);
+      }, 500);
     } catch (err) {
       console.error('App init error:', err);
     }
@@ -587,12 +584,22 @@ class NovelApp {
   // AI Audio Listening Engine (微信讀書 AI 聽書同款)
   // =========================================================================
   setupTTSEventHooks() {
-    novelTTS.onParagraphChange = (paraIdx, text) => {
+    novelTTS.onParagraphChange = (audioIdx, text, domParaIdx) => {
       document.querySelectorAll('.reader-paragraph').forEach(p => p.classList.remove('speaking-active'));
-      const activeEl = document.querySelector(`.reader-paragraph[data-para-idx="${paraIdx}"]`);
-      if (activeEl) {
-        activeEl.classList.add('speaking-active');
-        activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      const headingEl = document.getElementById('reader-chapter-heading');
+      if (headingEl) headingEl.classList.remove('speaking-active');
+
+      if (domParaIdx === -1) {
+        if (headingEl) {
+          headingEl.classList.add('speaking-active');
+          headingEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      } else {
+        const activeEl = document.querySelector(`.reader-paragraph[data-para-idx="${domParaIdx}"]`);
+        if (activeEl) {
+          activeEl.classList.add('speaking-active');
+          activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
       }
 
       const teleEl = document.getElementById('teleprompter-text');
@@ -756,10 +763,93 @@ class NovelApp {
   openAudioSheet() {
     this.updateAudioVoiceLabel();
     if (!novelTTS.isPlaying && !novelTTS.isPaused) {
+      const startIdx = this.findCurrentVisibleParagraphIndex();
+      novelTTS.jumpToParagraph(startIdx);
       novelTTS.play();
     }
     const modal = document.getElementById('audio-player-modal');
     if (modal) modal.classList.add('active');
+  }
+
+  // Find paragraph nearest to visible viewport top so listening doesn't restart from beginning
+  findCurrentVisibleParagraphIndex() {
+    const scrollCanvas = document.getElementById('reader-scroll-canvas');
+    if (!scrollCanvas) return -1;
+    // If scrolled at very top (< 40px), read from chapter heading
+    if (scrollCanvas.scrollTop < 40) return -1;
+
+    const paragraphs = document.querySelectorAll('.reader-paragraph');
+    const canvasRect = scrollCanvas.getBoundingClientRect();
+    const targetY = canvasRect.top + 60;
+
+    for (let i = 0; i < paragraphs.length; i++) {
+      const rect = paragraphs[i].getBoundingClientRect();
+      if (rect.bottom >= targetY) {
+        const idx = parseInt(paragraphs[i].getAttribute('data-para-idx') || '0', 10);
+        return isNaN(idx) ? 0 : idx;
+      }
+    }
+    return 0;
+  }
+
+  startTTSFromParagraph(paraIdx) {
+    this.hideParaQuickAction();
+    novelTTS.jumpToParagraph(paraIdx);
+    if (!novelTTS.isPlaying || novelTTS.isPaused) {
+      novelTTS.play();
+    }
+    this.updateAudioVoiceLabel();
+    this.showToast(paraIdx === -1 ? '▶ 開始朗讀章節標題' : `▶ 從第 ${paraIdx + 1} 段開始朗讀`);
+  }
+
+  showParaQuickAction(targetEl, paraIdx) {
+    const pill = document.getElementById('para-quick-action');
+    const scrollCanvas = document.getElementById('reader-scroll-canvas');
+    if (!pill || !scrollCanvas || !targetEl) return;
+
+    this.selectedParaIdx = paraIdx;
+    const canvasRect = scrollCanvas.getBoundingClientRect();
+    const targetRect = targetEl.getBoundingClientRect();
+
+    const top = (targetRect.top - canvasRect.top) + scrollCanvas.scrollTop;
+    const left = (targetRect.left - canvasRect.left) + (targetRect.width / 2);
+
+    pill.style.top = `${Math.max(10, top)}px`;
+    pill.style.left = `${Math.max(60, Math.min(canvasRect.width - 60, left))}px`;
+    pill.classList.add('active');
+  }
+
+  hideParaQuickAction() {
+    const pill = document.getElementById('para-quick-action');
+    if (pill) pill.classList.remove('active');
+    this.selectedParaIdx = null;
+  }
+
+  // Bidirectional Local Server Sync (Hub: http://192.168.0.114:3001)
+  async syncWithLocalServer(silent = false) {
+    try {
+      const syncStatusEl = document.getElementById('stat-sync-status');
+      if (syncStatusEl) {
+        syncStatusEl.innerHTML = `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#f59e0b;"></span> 同步中...`;
+      }
+      const res = await novelDB.syncWithServer();
+      this.renderBookshelf();
+      this.updateStatsUI();
+      if (syncStatusEl) {
+        syncStatusEl.innerHTML = `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#10b981;"></span> 192.168.0.114`;
+      }
+      if (!silent) {
+        this.showToast(`✓ 已與本機 (192.168.0.114:3001) 同步最新書架 (${res.count} 本)`);
+      }
+    } catch (err) {
+      const syncStatusEl = document.getElementById('stat-sync-status');
+      if (syncStatusEl) {
+        syncStatusEl.innerHTML = `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#ef4444;"></span> 離線模式`;
+      }
+      if (!silent) {
+        this.showToast('⚠️ 連線本機伺服器失敗，請確認同 Wi-Fi 網路');
+      }
+    }
   }
 
   updateAudioVoiceLabel() {
@@ -987,21 +1077,14 @@ class NovelApp {
   // Stats & Profile UI
   // =========================================================================
   updateStatsUI() {
-    const stats = novelDB.getReadingStats();
     const shelf = novelDB.getBookshelf();
-
-    const hours = Math.floor(stats.totalSeconds / 3600);
-    const mins = Math.floor((stats.totalSeconds % 3600) / 60);
-
-    const timeStr = `${hours} 小時 ${mins} 分鐘`;
-    const shelfStatsEl = document.getElementById('shelf-stats-val');
-    if (shelfStatsEl) shelfStatsEl.textContent = timeStr;
-
-    const statTotalEl = document.getElementById('stat-total-time');
-    if (statTotalEl) statTotalEl.textContent = `${hours} 小時 ${mins} 分`;
-
     const shelfCountEl = document.getElementById('stat-shelf-total');
     if (shelfCountEl) shelfCountEl.textContent = `${shelf.length} 本`;
+
+    const syncStatusEl = document.getElementById('stat-sync-status');
+    if (syncStatusEl) {
+      syncStatusEl.innerHTML = `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#10b981;"></span> 192.168.0.114`;
+    }
   }
 
   // =========================================================================
@@ -1062,10 +1145,37 @@ class NovelApp {
     if (scrollCanvas) {
       scrollCanvas.addEventListener('click', (e) => {
         if (e.target.closest('.reader-chapter-actions') || e.target.closest('button')) return;
+
+        const paraEl = e.target.closest('.reader-paragraph');
+        const headingEl = e.target.closest('#reader-chapter-heading');
+
+        if (paraEl || headingEl) {
+          const paraIdx = headingEl ? -1 : parseInt(paraEl.getAttribute('data-para-idx') || '0', 10);
+          // If already playing audio, tapping any paragraph immediately jumps reading to it!
+          if (novelTTS.isPlaying) {
+            this.startTTSFromParagraph(paraIdx);
+            return;
+          }
+          // If audio not playing, show the sleek floating "從此處朗讀" action pill!
+          this.showParaQuickAction(headingEl || paraEl, paraIdx);
+          return;
+        }
+
+        this.hideParaQuickAction();
         this.toggleReaderControls();
       });
 
+      scrollCanvas.addEventListener('dblclick', (e) => {
+        const paraEl = e.target.closest('.reader-paragraph');
+        const headingEl = e.target.closest('#reader-chapter-heading');
+        if (paraEl || headingEl) {
+          const paraIdx = headingEl ? -1 : parseInt(paraEl.getAttribute('data-para-idx') || '0', 10);
+          this.startTTSFromParagraph(paraIdx);
+        }
+      });
+
       scrollCanvas.addEventListener('scroll', () => {
+        this.hideParaQuickAction();
         this.updateStatusBar();
         clearTimeout(this.scrollSaveDebounce);
         this.scrollSaveDebounce = setTimeout(() => {
@@ -1253,6 +1363,18 @@ class NovelApp {
 
     this.on('btn-audio-prev-para', 'click', () => novelTTS.prevParagraph());
     this.on('btn-audio-next-para', 'click', () => novelTTS.nextParagraph());
+
+    // Floating Paragraph Quick Read Pill
+    this.on('btn-para-start-read', 'click', (e) => {
+      e.stopPropagation();
+      if (typeof this.selectedParaIdx === 'number') {
+        this.startTTSFromParagraph(this.selectedParaIdx);
+      }
+    });
+
+    // Local Server Sync (192.168.0.114:3001)
+    this.on('btn-header-sync', 'click', () => this.syncWithLocalServer(false));
+    this.on('btn-sync-now', 'click', () => this.syncWithLocalServer(false));
 
     // Voice picker modal triggers
     this.on('btn-audio-voice-pick', 'click', () => this.openVoicePicker());

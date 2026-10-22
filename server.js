@@ -595,6 +595,54 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // API 4: Sync Bookshelf & Reading Progress (Local Server Hub)
+  if (pathname === '/api/sync') {
+    const dataDir = path.join(__dirname, 'data');
+    const syncFile = path.join(dataDir, 'sync_store.json');
+
+    if (req.method === 'GET') {
+      try {
+        if (!fs.existsSync(syncFile)) {
+          res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+          return res.end(JSON.stringify({ success: true, empty: true }));
+        }
+        const data = fs.readFileSync(syncFile, 'utf-8');
+        res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ success: true, empty: false, ...JSON.parse(data) }));
+      } catch (err) {
+        res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+        res.end(JSON.stringify({ success: false, error: err.message }));
+      }
+      return;
+    }
+
+    if (req.method === 'POST') {
+      let body = '';
+      req.on('data', chunk => body += chunk);
+      req.on('end', () => {
+        try {
+          const payload = JSON.parse(body || '{}');
+          if (!fs.existsSync(dataDir)) {
+            fs.mkdirSync(dataDir, { recursive: true });
+          }
+          const toSave = {
+            shelf: payload.shelf || [],
+            progress: payload.progress || {},
+            settings: payload.settings || {},
+            updatedAt: Date.now()
+          };
+          fs.writeFileSync(syncFile, JSON.stringify(toSave, null, 2), 'utf-8');
+          res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({ success: true, updatedAt: toSave.updatedAt }));
+        } catch (err) {
+          res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({ success: false, error: err.message }));
+        }
+      });
+      return;
+    }
+  }
+
   // Static File Serving
   let reqPath = pathname === '/' ? '/index.html' : pathname;
   const filePath = path.join(__dirname, reqPath);

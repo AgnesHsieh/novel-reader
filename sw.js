@@ -1,5 +1,5 @@
 // Service Worker for 墨韻讀書 (Offline PWA Support)
-const CACHE_NAME = 'moyu-reader-v4';
+const CACHE_NAME = 'moyu-reader-v5';
 
 const STATIC_ASSETS = [
   './',

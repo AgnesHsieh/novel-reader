@@ -357,6 +357,80 @@ class NovelDB {
       return { totalSeconds: 13500, todaySeconds: 2400 };
     }
   }
+
+  // Bidirectional Local Server Sync (Hub: http://192.168.0.114:3001)
+  async syncWithServer() {
+    try {
+      const res = await fetch('/api/sync');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const serverData = await res.json();
+
+      const localShelf = this.getBookshelf();
+      const localProgress = this.getAllProgress();
+      const localSettings = this.getSettings();
+
+      if (serverData.empty) {
+        // Server empty: push local shelf and progress to server
+        await fetch('/api/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            shelf: localShelf,
+            progress: localProgress,
+            settings: localSettings
+          })
+        });
+        return { merged: false, pushed: true, count: localShelf.length, updatedAt: Date.now() };
+      }
+
+      // Merge server shelf and local shelf
+      const serverShelf = Array.isArray(serverData.shelf) ? serverData.shelf : [];
+      const mergedShelf = [...localShelf];
+
+      for (const sBook of serverShelf) {
+        const localIdx = mergedShelf.findIndex(b => b.id === sBook.id);
+        if (localIdx === -1) {
+          mergedShelf.push(sBook);
+        } else {
+          // If server copy has newer lastReadAt, keep server's progress
+          if ((sBook.lastReadAt || 0) > (mergedShelf[localIdx].lastReadAt || 0)) {
+            mergedShelf[localIdx] = { ...mergedShelf[localIdx], ...sBook };
+          }
+        }
+      }
+
+      // Merge progress
+      const mergedProgress = { ...(serverData.progress || {}), ...(localProgress || {}) };
+      if (serverData.progress) {
+        for (const bId of Object.keys(serverData.progress)) {
+          const sProg = serverData.progress[bId];
+          const lProg = localProgress[bId];
+          if (!lProg || (sProg.lastReadAt || 0) > (lProg.lastReadAt || 0)) {
+            mergedProgress[bId] = sProg;
+          }
+        }
+      }
+
+      this.saveBookshelf(mergedShelf);
+      localStorage.setItem(this.STORAGE_PROGRESS_KEY, JSON.stringify(mergedProgress));
+
+      // Push merged back to server
+      await fetch('/api/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          shelf: mergedShelf,
+          progress: mergedProgress,
+          settings: localSettings
+        })
+      });
+
+      return { merged: true, count: mergedShelf.length, updatedAt: serverData.updatedAt || Date.now() };
+    } catch (err) {
+      console.warn('[Sync] Local server sync failed:', err);
+      throw err;
+    }
+  }
 }
 
 window.novelDB = new NovelDB();
