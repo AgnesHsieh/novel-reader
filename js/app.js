@@ -136,13 +136,19 @@ class NovelApp {
       `;
     });
 
-    // Add Book card button
+    // Add Book card button - Wrapped in .book-card for identical height and alignment
     html += `
-      <div class="book-card-add" id="btn-shelf-add-card">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-        </svg>
-        <span>搜尋 / 匯入新書</span>
+      <div class="book-card" id="btn-shelf-add-card">
+        <div class="book-card-add">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          </svg>
+          <span>搜尋 / 匯入新書</span>
+        </div>
+        <div class="book-progress-wrapper" style="visibility: hidden;">
+          <div class="book-progress-bar"></div>
+          <div class="book-progress-text">新書</div>
+        </div>
       </div>
     `;
 
