@@ -146,7 +146,7 @@ async function searchOnlineNovels(keyword) {
     const encodedKw = encodeURIComponent(kw);
     // Source 1: 新筆趣閣 (即時可連線高速源)
     try {
-      const searchUrl = `https://www.biquge7.top/search?keyword=${encodedKw}`;
+      const searchUrl = `https://www.biquge7.xyz/search?keyword=${encodedKw}`;
       const res = await fetchUrl(searchUrl, 5000);
       if (res.status === 200 && res.text) {
         const itemRegex = /<div class="tui_1_item">([\s\S]*?)<\/div>\s*<\/div>/gi;
