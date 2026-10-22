@@ -312,9 +312,11 @@ body {
 /* Bookshelf Grid (3D WeChat Read Books) */
 .bookshelf-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 18px 12px;
-  padding: 6px 16px 24px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px 10px;
+  padding: 6px 14px 24px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* Book Cover Card - Strict Uniform Sizing */
@@ -322,9 +324,12 @@ body {
   display: flex;
   flex-direction: column;
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
   cursor: pointer;
   position: relative;
   transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
 }
 
 .book-card:hover {
@@ -383,6 +388,7 @@ body {
   gap: 2px;
   min-height: 22px;
   justify-content: flex-end;
+  min-width: 0;
 }
 
 .book-cover-author {
@@ -391,6 +397,8 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
+  display: block;
 }
 
 .book-cover-tag {
@@ -411,7 +419,10 @@ body {
   gap: 3px;
   height: 26px;
   min-height: 26px;
+  width: 100%;
+  min-width: 0;
   justify-content: center;
+  box-sizing: border-box;
 }
 
 .book-progress-bar {
@@ -435,6 +446,9 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   line-height: 1.2;
+  width: 100%;
+  min-width: 0;
+  display: block;
 }
 
 /* Add Book Empty Card in Shelf - Matches .book-cover perfectly */
