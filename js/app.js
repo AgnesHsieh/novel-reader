@@ -1551,6 +1551,63 @@ class NovelApp {
       }
     });
 
+    // Bookshelf Backup Export
+    this.on('btn-export-backup', 'click', () => {
+      try {
+        const shelf = novelDB.getBookshelf();
+        const progress = novelDB.getAllProgress();
+        const settings = novelDB.getSettings();
+        const backupData = {
+          version: '1.0',
+          exportedAt: new Date().toISOString(),
+          shelf,
+          progress,
+          settings
+        };
+        const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `墨韻讀書_書架備份_${new Date().toISOString().slice(0, 10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.showToast('書架備份檔案已成功下載！');
+      } catch (err) {
+        alert('匯出失敗: ' + err.message);
+      }
+    });
+
+    // Bookshelf Backup Import
+    const backupInput = document.getElementById('input-backup-file');
+    this.on('btn-import-backup', 'click', () => {
+      if (backupInput) backupInput.click();
+    });
+
+    if (backupInput) {
+      backupInput.addEventListener('change', async (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        try {
+          const text = await file.text();
+          const data = JSON.parse(text);
+          if (Array.isArray(data.shelf)) {
+            novelDB.saveBookshelf(data.shelf);
+          }
+          if (data.progress) {
+            localStorage.setItem(novelDB.STORAGE_PROGRESS_KEY, JSON.stringify(data.progress));
+          }
+          if (data.settings) {
+            novelDB.saveSettings(data.settings);
+          }
+          this.renderBookshelf();
+          this.showToast('🎉 書架與進度已成功同步還原！');
+        } catch (err) {
+          alert('備份檔案解析失敗: ' + err.message);
+        }
+        backupInput.value = '';
+      });
+    }
+
     // Backend API Server Configuration
     const updateApiStatusUI = () => {
       const statusEl = document.getElementById('profile-api-status');

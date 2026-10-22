@@ -190,6 +190,17 @@
             </div>
             <button id="btn-profile-api" class="action-pill-btn">設定網址</button>
           </div>
+          <div style="padding: 14px 18px; border-bottom: 1px solid var(--wr-border); display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <div style="font-size: 14px; font-weight: 600;">備份與同步書架</div>
+              <div style="font-size: 11px; color: var(--wr-text-secondary); margin-top: 2px;">匯出或匯入電腦/手機上的書籍進度</div>
+            </div>
+            <div style="display: flex; gap: 6px;">
+              <button id="btn-export-backup" class="action-pill-btn">匯出</button>
+              <button id="btn-import-backup" class="action-pill-btn">匯入</button>
+              <input type="file" id="input-backup-file" accept=".json" style="display: none;">
+            </div>
+          </div>
           <div style="padding: 14px 18px; display: flex; justify-content: space-between; align-items: center;">
             <span style="font-size: 14px; font-weight: 600;">清空本機快取</span>
             <button id="btn-clear-cache" class="action-pill-btn" style="color: #ef4444; border-color: rgba(239, 68, 68, 0.3);">清空</button>
