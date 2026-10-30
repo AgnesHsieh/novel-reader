@@ -9,6 +9,8 @@ class NovelDB {
     this.STORAGE_PROGRESS_KEY = 'weread_progress_v1';
     this.STORAGE_SETTINGS_KEY = 'weread_settings_v1';
     this.STORAGE_STATS_KEY = 'weread_reading_stats_v1';
+    this.STORAGE_DELETED_KEY = 'weread_deleted_books_v1';
+    this.STORAGE_INIT_KEY = 'weread_shelf_initialized_v1';
 
     this.dbPromise = this.initIndexedDB();
     this.initDefaultBookshelf();
@@ -17,7 +19,7 @@ class NovelDB {
   // Initialize IndexedDB for large chapter caches (PDF / large TXT novels)
   initIndexedDB() {
     return new Promise((resolve) => {
-      if (!window.indexedDB) return resolve(null);
+      if (typeof window === 'undefined' || !window.indexedDB) return resolve(null);
       try {
         const req = indexedDB.open('WeReadNovelDB', 2);
         req.onupgradeneeded = (e) => {
@@ -34,8 +36,42 @@ class NovelDB {
     });
   }
 
-  // Pre-seed bookshelf with classic gems if empty on first run
+  // Tombstone management for book removals (prevents deleted books from being resurrected by sync)
+  getDeletedBookIds() {
+    try {
+      const raw = localStorage.getItem(this.STORAGE_DELETED_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  markBookDeleted(bookId) {
+    if (!bookId) return;
+    try {
+      const set = new Set(this.getDeletedBookIds());
+      set.add(bookId);
+      localStorage.setItem(this.STORAGE_DELETED_KEY, JSON.stringify(Array.from(set)));
+    } catch (e) {}
+  }
+
+  unmarkBookDeleted(bookId) {
+    if (!bookId) return;
+    try {
+      const set = new Set(this.getDeletedBookIds());
+      set.delete(bookId);
+      localStorage.setItem(this.STORAGE_DELETED_KEY, JSON.stringify(Array.from(set)));
+    } catch (e) {}
+  }
+
+  // Pre-seed bookshelf with classic gems ONLY on brand new first-time installation
   initDefaultBookshelf() {
+    try {
+      if (localStorage.getItem(this.STORAGE_INIT_KEY)) {
+        return; // User has already initialized, never force default books back
+      }
+    } catch (e) {}
+
     const shelf = this.getBookshelf();
     if (!shelf || shelf.length === 0) {
       const initialBooks = [
@@ -93,6 +129,10 @@ class NovelDB {
       ];
       this.saveBookshelf(initialBooks);
     }
+
+    try {
+      localStorage.setItem(this.STORAGE_INIT_KEY, 'true');
+    } catch (e) {}
   }
 
   // Get Bookshelf
@@ -150,7 +190,35 @@ class NovelDB {
     }
 
     this.saveBookshelf(shelf);
+    this.unmarkBookDeleted(book.id);
+
+    // Push updated shelf to local server hub immediately
+    this.pushShelfToServer(shelf).catch(() => {});
+
     return bookEntry;
+  }
+
+  // Push shelf and tombstones to server hub asynchronously
+  async pushShelfToServer(shelf) {
+    try {
+      const apiBase = (window.novelSources && typeof window.novelSources.getApiBaseUrl === 'function')
+        ? window.novelSources.getApiBaseUrl()
+        : '';
+      const localProgress = this.getAllProgress();
+      const localSettings = this.getSettings();
+      const deletedIds = this.getDeletedBookIds();
+
+      await fetch(`${apiBase}/api/sync`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          shelf,
+          progress: localProgress,
+          settings: localSettings,
+          deletedIds
+        })
+      });
+    } catch (e) {}
   }
 
   // Check if book is already in shelf
@@ -164,6 +232,7 @@ class NovelDB {
     let shelf = this.getBookshelf();
     shelf = shelf.filter(b => b.id !== bookId);
     this.saveBookshelf(shelf);
+    this.markBookDeleted(bookId);
 
     // Remove from localStorage
     try {
@@ -186,6 +255,9 @@ class NovelDB {
         } catch (e) {}
       }
     });
+
+    // Push updated shelf to local server hub immediately so server drops the book
+    this.pushShelfToServer(shelf).catch(() => {});
 
     return true;
   }
@@ -211,9 +283,27 @@ class NovelDB {
     } catch (err) {
       console.warn('IndexedDB save chapters failed:', err);
     }
+
+    // Push chapters to server hub so mobile can download and read 100% offline
+    this.pushChaptersToServer(bookId, chapters).catch(() => {});
   }
 
-  // Asynchronous get chapters from localStorage or IndexedDB
+  // Push full chapters to server hub for seamless cross-device offline reading
+  async pushChaptersToServer(bookId, chapters) {
+    if (!bookId || !Array.isArray(chapters) || chapters.length === 0) return;
+    try {
+      const apiBase = (window.novelSources && typeof window.novelSources.getApiBaseUrl === 'function')
+        ? window.novelSources.getApiBaseUrl()
+        : '';
+      await fetch(`${apiBase}/api/book-chapters`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bookId, chapters })
+      });
+    } catch (e) {}
+  }
+
+  // Asynchronous get chapters from localStorage, IndexedDB, or server hub fallback
   async getChapters(bookId) {
     // 1. Try localStorage
     const fast = this.getCachedChapters(bookId);
@@ -223,7 +313,7 @@ class NovelDB {
     try {
       const db = await this.dbPromise;
       if (db) {
-        return new Promise((resolve) => {
+        const idbChapters = await new Promise((resolve) => {
           const tx = db.transaction('chapters', 'readonly');
           const store = tx.objectStore('chapters');
           const req = store.get(bookId);
@@ -236,6 +326,23 @@ class NovelDB {
           };
           req.onerror = () => resolve(null);
         });
+        if (idbChapters && idbChapters.length > 0) return idbChapters;
+      }
+    } catch (e) {}
+
+    // 3. Try fetching from server hub /api/book-chapters (syncs chapters from PC to mobile)
+    try {
+      const apiBase = (window.novelSources && typeof window.novelSources.getApiBaseUrl === 'function')
+        ? window.novelSources.getApiBaseUrl()
+        : '';
+      const res = await fetch(`${apiBase}/api/book-chapters?id=${encodeURIComponent(bookId)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.chapters) && data.chapters.length > 0) {
+          // Permanently cache locally in IndexedDB so mobile can read 100% offline
+          await this.saveChapters(bookId, data.chapters);
+          return data.chapters;
+        }
       }
     } catch (e) {}
 
@@ -358,36 +465,58 @@ class NovelDB {
     }
   }
 
-  // Bidirectional Local Server Sync (Hub: http://192.168.0.114:3001)
+  // Bidirectional Local Server Sync (Hub)
   async syncWithServer() {
     try {
-      const res = await fetch('/api/sync');
+      const apiBase = (window.novelSources && typeof window.novelSources.getApiBaseUrl === 'function')
+        ? window.novelSources.getApiBaseUrl()
+        : '';
+      const res = await fetch(`${apiBase}/api/sync`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const serverData = await res.json();
 
       const localShelf = this.getBookshelf();
       const localProgress = this.getAllProgress();
       const localSettings = this.getSettings();
+      const localDeleted = this.getDeletedBookIds();
+      const serverDeleted = Array.isArray(serverData.deletedIds) ? serverData.deletedIds : [];
+
+      // Combine tombstones (any book deleted on either device remains deleted)
+      const allDeleted = new Set([...localDeleted, ...serverDeleted]);
+      try {
+        localStorage.setItem(this.STORAGE_DELETED_KEY, JSON.stringify(Array.from(allDeleted)));
+      } catch (e) {}
 
       if (serverData.empty) {
         // Server empty: push local shelf and progress to server
-        await fetch('/api/sync', {
+        const cleanShelf = localShelf.filter(b => !allDeleted.has(b.id));
+        await fetch(`${apiBase}/api/sync`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            shelf: localShelf,
+            shelf: cleanShelf,
             progress: localProgress,
-            settings: localSettings
+            settings: localSettings,
+            deletedIds: Array.from(allDeleted)
           })
         });
-        return { merged: false, pushed: true, count: localShelf.length, updatedAt: Date.now() };
+        return { merged: false, pushed: true, count: cleanShelf.length, updatedAt: Date.now() };
       }
 
-      // Merge server shelf and local shelf
+      // Merge server shelf and local shelf respecting tombstones
       const serverShelf = Array.isArray(serverData.shelf) ? serverData.shelf : [];
-      const mergedShelf = [...localShelf];
+      const mergedShelf = [];
 
+      // 1. Keep local books that have NOT been deleted
+      for (const b of localShelf) {
+        if (!allDeleted.has(b.id)) {
+          mergedShelf.push(b);
+        }
+      }
+
+      // 2. Add server books that have NOT been deleted and not already in mergedShelf
       for (const sBook of serverShelf) {
+        if (allDeleted.has(sBook.id)) continue;
         const localIdx = mergedShelf.findIndex(b => b.id === sBook.id);
         if (localIdx === -1) {
           mergedShelf.push(sBook);
@@ -399,36 +528,49 @@ class NovelDB {
         }
       }
 
-      // Merge progress
+      // Merge progress & purge progress for deleted books
       const mergedProgress = { ...(serverData.progress || {}), ...(localProgress || {}) };
-      if (serverData.progress) {
-        for (const bId of Object.keys(serverData.progress)) {
-          const sProg = serverData.progress[bId];
-          const lProg = localProgress[bId];
-          if (!lProg || (sProg.lastReadAt || 0) > (lProg.lastReadAt || 0)) {
-            mergedProgress[bId] = sProg;
-          }
-        }
+      for (const delId of allDeleted) {
+        delete mergedProgress[delId];
       }
 
       this.saveBookshelf(mergedShelf);
       localStorage.setItem(this.STORAGE_PROGRESS_KEY, JSON.stringify(mergedProgress));
 
-      // Push merged back to server
-      await fetch('/api/sync', {
+      // Push merged back to server with complete tombstone list
+      await fetch(`${apiBase}/api/sync`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           shelf: mergedShelf,
           progress: mergedProgress,
-          settings: localSettings
+          settings: localSettings,
+          deletedIds: Array.from(allDeleted)
         })
       });
+
+      // Background sync all local book chapters to server hub
+      setTimeout(() => {
+        this.syncAllLocalChaptersToServer().catch(() => {});
+      }, 300);
 
       return { merged: true, count: mergedShelf.length, updatedAt: serverData.updatedAt || Date.now() };
     } catch (err) {
       console.warn('[Sync] Local server sync failed:', err);
       throw err;
+    }
+  }
+
+  // Push all local bookshelf chapters to server hub so other devices can read offline
+  async syncAllLocalChaptersToServer() {
+    const shelf = this.getBookshelf();
+    for (const b of shelf) {
+      try {
+        const chapters = await this.getChapters(b.id);
+        if (chapters && Array.isArray(chapters) && chapters.length > 0) {
+          await this.pushChaptersToServer(b.id, chapters);
+        }
+      } catch (e) {}
     }
   }
 }

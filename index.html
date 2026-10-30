@@ -29,7 +29,12 @@
         <span class="wr-brand-badge">WeRead</span>
       </div>
       <div class="wr-header-actions">
-        <button id="btn-header-sync" class="icon-btn" aria-label="本機書架即時同步" title="與本機伺服器 (192.168.0.114:3001) 同步">
+        <button id="btn-header-mobile" class="icon-btn" aria-label="手機連線與二維碼" title="📱 手機連線 / 跨裝置閱讀與掃碼">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3" />
+          </svg>
+        </button>
+        <button id="btn-header-sync" class="icon-btn" aria-label="本機書架即時同步" title="與伺服器 (Port 3001) 即時同步">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
           </svg>
@@ -124,11 +129,14 @@
 
         <!-- Stats Overview Cards -->
         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 24px;">
-          <div style="background: var(--wr-bg-card); padding: 14px; border-radius: var(--wr-radius-md); border: 1px solid var(--wr-border);">
-            <div style="font-size: 12px; color: var(--wr-text-secondary);">本機同步中心</div>
+          <div id="card-sync-status" style="background: var(--wr-bg-card); padding: 14px; border-radius: var(--wr-radius-md); border: 1px solid var(--wr-border); cursor: pointer;" title="點擊查看手機連線網址與二維碼">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div style="font-size: 12px; color: var(--wr-text-secondary);">📱 手機/本機同步</div>
+              <span style="font-size: 11px; color: var(--wr-primary); font-weight: 700;">連線資訊 ➔</span>
+            </div>
             <div id="stat-sync-status" style="font-size: 13.5px; font-weight: 700; color: #10b981; margin-top: 6px; display: flex; align-items: center; gap: 4px;">
               <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #10b981;"></span>
-              192.168.0.114
+              檢測中...
             </div>
           </div>
           <div style="background: var(--wr-bg-card); padding: 14px; border-radius: var(--wr-radius-md); border: 1px solid var(--wr-border);">
@@ -186,8 +194,8 @@
           </div>
           <div style="padding: 14px 18px; border-bottom: 1px solid var(--wr-border); display: flex; justify-content: space-between; align-items: center;">
             <div>
-              <div style="font-size: 14px; font-weight: 600;">本機伺服器雙向同步</div>
-              <div style="font-size: 11px; color: var(--wr-text-secondary); margin-top: 2px;">與電腦 192.168.0.114:3001 即時同步書架與進度</div>
+              <div style="font-size: 14px; font-weight: 600;">後端伺服器雙向同步</div>
+              <div style="font-size: 11px; color: var(--wr-text-secondary); margin-top: 2px;">與後端伺服器 (Port 3001) 即時同步書架與進度</div>
             </div>
             <button id="btn-sync-now" class="action-pill-btn" style="color: var(--wr-primary); border-color: var(--wr-primary); font-weight: 700;">立即同步</button>
           </div>
@@ -650,6 +658,63 @@
     </div>
   </div>
 
+  <!-- Mobile Connect / Cross-Device Sync Modal -->
+  <div id="modal-mobile-connect" class="voice-picker-modal">
+    <div class="voice-picker-sheet" style="max-height: 85vh; overflow-y: auto;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 20px;">📱</span>
+          <h3 style="font-size: 16px; font-weight: 700;">手機連線與跨裝置同步</h3>
+        </div>
+        <button id="btn-close-mobile-modal" class="icon-btn">✕</button>
+      </div>
+
+      <!-- QR Code Display -->
+      <div style="text-align: center; background: var(--wr-bg-card); border: 1px solid var(--wr-border); border-radius: var(--wr-radius-md); padding: 16px 12px; margin-bottom: 14px;">
+        <div style="font-size: 13px; font-weight: 700; margin-bottom: 10px; color: var(--wr-text);">📷 手機開啟相機直接掃碼</div>
+        <img id="mobile-qr-code-img" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=http%3A%2F%2F172.16.220.104%3A3001" style="width: 160px; height: 160px; border-radius: 10px; border: 1px solid var(--wr-border); background: #ffffff; padding: 6px; display: inline-block; box-shadow: 0 4px 12px rgba(0,0,0,0.08);" alt="手機掃碼連線" />
+        <div style="font-size: 11px; color: var(--wr-text-secondary); margin-top: 8px;">掃描即可直接在手機瀏覽器開啟本閱讀器</div>
+      </div>
+
+      <!-- LAN URLs Section -->
+      <div style="margin-bottom: 14px;">
+        <div style="font-size: 13px; font-weight: 700; margin-bottom: 8px;">🌐 或在手機瀏覽器輸入以下網址：</div>
+        
+        <!-- Wi-Fi URL Option -->
+        <div style="background: var(--wr-bg-card); border: 1px solid var(--wr-primary); border-radius: var(--wr-radius-md); padding: 12px 14px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span style="font-size: 11px; font-weight: 700; background: var(--wr-primary); color: #fff; padding: 2px 6px; border-radius: 4px;">Wi-Fi 首選</span>
+              <span style="font-size: 14px; font-weight: 700; font-family: monospace; color: var(--wr-text);" id="mobile-url-wifi">http://172.16.220.104:3001</span>
+            </div>
+            <div style="font-size: 11px; color: var(--wr-text-secondary); margin-top: 3px;">手機連至相同 Wi-Fi (JSEC-2F) 時使用</div>
+          </div>
+          <button class="action-pill-btn btn-copy-url" data-target="mobile-url-wifi" style="padding: 6px 12px; font-weight: 700; color: var(--wr-primary);">複製</button>
+        </div>
+
+        <!-- Ethernet URL Option -->
+        <div style="background: var(--wr-bg-card); border: 1px solid var(--wr-border); border-radius: var(--wr-radius-md); padding: 12px 14px; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span style="font-size: 11px; font-weight: 700; background: var(--wr-text-secondary); color: #fff; padding: 2px 6px; border-radius: 4px;">有線網路</span>
+              <span style="font-size: 14px; font-weight: 700; font-family: monospace; color: var(--wr-text);" id="mobile-url-eth">http://172.16.220.112:3001</span>
+            </div>
+            <div style="font-size: 11px; color: var(--wr-text-secondary); margin-top: 3px;">內網路由器同網段備用網址</div>
+          </div>
+          <button class="action-pill-btn btn-copy-url" data-target="mobile-url-eth" style="padding: 6px 12px; font-weight: 700;">複製</button>
+        </div>
+      </div>
+
+      <!-- Troubleshooting Checklist -->
+      <div style="background: var(--wr-bg-subtle); border-radius: var(--wr-radius-md); padding: 12px 14px; font-size: 12px; line-height: 1.6; color: var(--wr-text-secondary);">
+        <div style="font-weight: 700; color: var(--wr-text); margin-bottom: 4px;">💡 手機連線常見問題排查：</div>
+        <div>1. <strong>請勿輸入舊的 192.168.0.114</strong>：因目前電腦在 JSEC-2F 網路，IP 已更新為 <strong>172.16.220.104</strong>。</div>
+        <div>2. <strong>確認同 Wi-Fi</strong>：手機請關閉行動網路 (4G/5G)，連上 Wi-Fi <strong>JSEC-2F</strong>。</div>
+        <div>3. <strong>若公司 Wi-Fi 阻擋裝置互連 (AP 隔離)</strong>：可開啟手機熱點讓電腦連接，或使用「書架備份匯出」功能直接免伺服器離線同步。</div>
+      </div>
+    </div>
+  </div>
+
   <!-- API Server URL Modal -->
   <div id="modal-api-server" class="voice-picker-modal">
     <div class="voice-picker-sheet">
@@ -673,11 +738,11 @@
   <div id="wr-toast" class="wr-toast">已更新閱讀進度</div>
 
   <!-- Scripts -->
-  <script src="js/chinese_conv.js?v=230"></script>
-  <script src="js/sources.js?v=230"></script>
-  <script src="js/db.js?v=230"></script>
-  <script src="js/tts.js?v=230"></script>
-  <script src="js/app.js?v=230"></script>
+  <script src="js/chinese_conv.js?v=234"></script>
+  <script src="js/sources.js?v=234"></script>
+  <script src="js/db.js?v=234"></script>
+  <script src="js/tts.js?v=234"></script>
+  <script src="js/app.js?v=234"></script>
 
   <!-- Service Worker Registration for PWA & Offline Access -->
   <script>

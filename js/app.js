@@ -22,7 +22,12 @@ class NovelApp {
       this.updateStatsUI();
       this.setupTTSEventHooks();
 
-      // Auto-sync with local server (192.168.0.114:3001) on startup
+      // Check server health on startup
+      novelSources.checkServerHealth().then(() => {
+        this.updateStatsUI();
+      });
+
+      // Auto-sync with local server on startup
       setTimeout(() => {
         this.syncWithLocalServer(true);
       }, 500);
@@ -55,6 +60,8 @@ class NovelApp {
     if (tabName === 'shelf') {
       this.renderBookshelf();
       this.updateStatsUI();
+    } else if (tabName === 'search') {
+      this.renderDiscoverDefault();
     } else if (tabName === 'profile') {
       this.updateStatsUI();
       const s = novelDB.getSettings();
@@ -291,8 +298,9 @@ class NovelApp {
 
     for (let i = 0; i < toDownload.length; i++) {
       const ch = toDownload[i];
+      const actualIdx = this.currentBook.chapters.indexOf(ch);
       try {
-        const full = await novelSources.getChapterContent(this.currentBook.id, ch, i);
+        const full = await novelSources.getChapterContent(this.currentBook, actualIdx !== -1 ? actualIdx : i);
         if (full && full.content) {
           ch.content = full.content;
           ch.fontFace = full.fontFace;
@@ -835,19 +843,21 @@ class NovelApp {
       const res = await novelDB.syncWithServer();
       this.renderBookshelf();
       this.updateStatsUI();
+      const host = window.location.hostname || 'localhost';
+      const port = window.location.port || '3001';
       if (syncStatusEl) {
-        syncStatusEl.innerHTML = `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#10b981;"></span> 192.168.0.114`;
+        syncStatusEl.innerHTML = `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#10b981;"></span> ${host}:${port}`;
       }
       if (!silent) {
-        this.showToast(`✓ 已與本機 (192.168.0.114:3001) 同步最新書架 (${res.count} 本)`);
+        this.showToast(`✓ 已與伺服器 (${host}:${port}) 同步最新書架 (${res.count} 本)`);
       }
     } catch (err) {
       const syncStatusEl = document.getElementById('stat-sync-status');
       if (syncStatusEl) {
-        syncStatusEl.innerHTML = `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#ef4444;"></span> 離線模式`;
+        syncStatusEl.innerHTML = `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#ef4444;"></span> 伺服器未連線`;
       }
       if (!silent) {
-        this.showToast('⚠️ 連線本機伺服器失敗，請確認同 Wi-Fi 網路');
+        this.showToast('⚠️ 連線伺服器失敗，請確認已執行 node server.js');
       }
     }
   }
@@ -972,15 +982,185 @@ class NovelApp {
   // =========================================================================
   // Search Engine & Free Novel Discovery
   // =========================================================================
+  renderDiscoverDefault() {
+    const list = document.getElementById('search-results-list');
+    const input = document.getElementById('search-input');
+    if (!list) return;
+
+    // If user has typed a query, don't clobber it
+    if (input && input.value.trim()) return;
+
+    const isOnline = novelSources.isServerOnline;
+    const defaultBooks = novelSources.localBooks || [];
+
+    let serverNotice = '';
+    if (isOnline === false) {
+      serverNotice = `
+        <div style="margin-bottom: 16px; padding: 12px 14px; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: var(--wr-radius-md); font-size: 13px; color: var(--wr-text); display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+          <div>
+            <div style="color: #ef4444; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+              <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#ef4444;"></span>
+              全網檢索伺服器未啟動（目前為離線閱讀模式）
+            </div>
+            <div style="color: var(--wr-text-secondary); font-size: 11.5px; margin-top: 3px;">
+              在專案終端機執行 <code>node server.js</code> 即可解鎖全網千萬本免費小說即時搜尋！
+            </div>
+          </div>
+          <button id="btn-recheck-server" class="action-pill-btn mini" style="white-space: nowrap; font-weight: 600;">🔄 測試連線</button>
+        </div>
+      `;
+    } else if (isOnline === true) {
+      serverNotice = `
+        <div style="margin-bottom: 14px; padding: 8px 14px; background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: var(--wr-radius-md); font-size: 12px; color: #10b981; display: flex; align-items: center; gap: 6px;">
+          <span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:#10b981;"></span>
+          全網即時免費小說搜尋引擎已就緒，支援數十萬本網路小說即時檢索
+        </div>
+      `;
+    }
+
+    let html = serverNotice;
+
+    // Categories
+    html += `
+      <div style="margin-bottom: 20px;">
+        <div style="font-size: 14px; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
+          <span>🔥 熱門題材分類</span>
+          <span style="font-size: 11px; color: var(--wr-text-secondary);">點擊快速探索</span>
+        </div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <button class="action-pill-btn search-category-chip" data-cat="玄幻熱血">玄幻熱血</button>
+          <button class="action-pill-btn search-category-chip" data-cat="古典仙俠">古典仙俠</button>
+          <button class="action-pill-btn search-category-chip" data-cat="仙俠探案">仙俠探案</button>
+          <button class="action-pill-btn search-category-chip" data-cat="歷史傳奇">歷史傳奇</button>
+          <button class="action-pill-btn search-category-chip" data-cat="科幻末世">科幻末世</button>
+          <button class="action-pill-btn search-category-chip" data-cat="古典名著">古典名著</button>
+        </div>
+      </div>
+    `;
+
+    // Featured Curated Books
+    html += `
+      <div>
+        <div style="font-size: 14px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
+          <span>⭐ 精選人氣神作 (${defaultBooks.length} 本即點即讀)</span>
+          <span style="font-size: 11px; color: var(--wr-text-secondary);">官方校對</span>
+        </div>
+        <div id="discover-books-list">
+    `;
+
+    defaultBooks.forEach(book => {
+      const inShelf = novelDB.isInShelf(book.id);
+      const displayTitle = this.formatChinese(book.title);
+      const displayAuthor = this.formatChinese(book.author);
+      const displayCategory = this.formatChinese(book.category || '網絡小說');
+      const displayIntro = this.formatChinese(book.intro || '暫無簡介');
+
+      html += `
+        <div class="result-card" data-book-id="${book.id}">
+          <div class="result-mini-cover" style="background: ${book.coverBg || 'linear-gradient(135deg, #2563eb, #1e40af)'};">
+            ${inShelf ? '<div class="cover-shelf-ribbon">✓ 已收藏</div>' : ''}
+            ${this.escapeHtml(displayTitle)}
+          </div>
+          <div class="result-info">
+            <div>
+              <div class="result-title">
+                <span>${this.escapeHtml(displayTitle)}</span>
+                <span class="source-badge">${book.coverTag || '官方精校'}</span>
+              </div>
+              <div class="result-author">${this.escapeHtml(displayAuthor)} · ${this.escapeHtml(displayCategory)}</div>
+              <div class="result-desc">${this.escapeHtml(displayIntro)}</div>
+            </div>
+            <div class="result-actions">
+              <button class="btn-read-now" data-action="read" data-book-id="${book.id}">立即閱讀</button>
+              <button class="btn-add-shelf ${inShelf ? 'in-shelf' : ''}" data-action="add-shelf" data-book-id="${book.id}">
+                ${inShelf ? '✓ 已在書架' : '+ 加入書架'}
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+
+    html += `
+        </div>
+      </div>
+    `;
+
+    list.innerHTML = html;
+
+    // Category clicks
+    list.querySelectorAll('.search-category-chip').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const cat = btn.getAttribute('data-cat');
+        const sInput = document.getElementById('search-input');
+        if (sInput) sInput.value = cat;
+        this.doSearch(cat);
+      });
+    });
+
+    // Recheck server button
+    const recheckBtn = list.querySelector('#btn-recheck-server');
+    if (recheckBtn) {
+      recheckBtn.addEventListener('click', async () => {
+        recheckBtn.textContent = '連線測試中...';
+        await novelSources.checkServerHealth();
+        this.renderDiscoverDefault();
+        this.showToast(novelSources.isServerOnline ? '✓ 伺服器連線成功！' : '伺服器仍未連線，請確認在終端執行 node server.js');
+      });
+    }
+
+    this.bindResultCardEvents(list, defaultBooks);
+  }
+
+  bindResultCardEvents(container, booksList) {
+    container.querySelectorAll('.result-card').forEach(card => {
+      const bookId = card.getAttribute('data-book-id');
+      const bookData = booksList.find(r => r.id === bookId);
+
+      const readBtn = card.querySelector('[data-action="read"]');
+      if (readBtn && bookData) {
+        readBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          novelDB.addToShelf(bookData);
+          this.openBook(bookId);
+        });
+      }
+
+      const shelfBtn = card.querySelector('[data-action="add-shelf"]');
+      if (shelfBtn && bookData) {
+        shelfBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const nowInShelf = novelDB.isInShelf(bookId);
+          if (nowInShelf) {
+            this.showToast(`《${this.formatChinese(bookData.title)}》已在書架中`);
+            return;
+          }
+          novelDB.addToShelf(bookData);
+          shelfBtn.classList.add('in-shelf');
+          shelfBtn.textContent = '✓ 已在書架';
+          const coverEl = card.querySelector('.result-mini-cover');
+          if (coverEl && !coverEl.querySelector('.cover-shelf-ribbon')) {
+            coverEl.insertAdjacentHTML('afterbegin', '<div class="cover-shelf-ribbon">✓ 已收藏</div>');
+          }
+          this.renderBookshelf();
+          this.showToast(`✓ 已將《${this.formatChinese(bookData.title)}》加入書架！`);
+        });
+      }
+    });
+  }
+
   async doSearch(keyword) {
-    if (!keyword || !keyword.trim()) return;
+    if (!keyword || !keyword.trim()) {
+      this.renderDiscoverDefault();
+      return;
+    }
 
     const list = document.getElementById('search-results-list');
     if (!list) return;
 
     list.innerHTML = `
       <div style="text-align: center; padding: 40px; color: var(--wr-text-secondary);">
-        <div style="font-size: 24px; margin-bottom: 8px;">🔍</div>
+        <div style="font-size: 26px; margin-bottom: 10px;">🔍</div>
         正在全網搜尋免費小說《${this.escapeHtml(keyword)}》...
       </div>
     `;
@@ -989,16 +1169,52 @@ class NovelApp {
       const results = await novelSources.search(keyword);
 
       if (results.length === 0) {
+        const isOffline = novelSources.isServerOnline === false;
         list.innerHTML = `
-          <div style="text-align: center; padding: 40px; color: var(--wr-text-muted);">
-            未找到與「${this.escapeHtml(keyword)}」相關的小說。<br>
-            您也可以點選右上角「+」或書架上的「貼上小說網址」直接解析閱讀！
+          <div style="text-align: center; padding: 40px 20px; color: var(--wr-text-secondary);">
+            <div style="font-size: 34px; margin-bottom: 12px;">${isOffline ? '📡' : '🔍'}</div>
+            <div style="font-weight: 700; font-size: 16px; margin-bottom: 8px; color: var(--wr-text);">
+              ${isOffline ? '後端伺服器未連線' : `未找到與「${this.escapeHtml(keyword)}」相關的小說`}
+            </div>
+            <div style="font-size: 13px; line-height: 1.6; max-width: 440px; margin: 0 auto 16px;">
+              ${isOffline
+                ? `目前後端服務尚未啟動，無法進行全網即時抓取。<br>請在專案目錄終端機執行 <code>node server.js</code> 即可解鎖全網數百萬本免費小說搜尋！`
+                : `建議嘗試不同關鍵字（如書名簡稱、作者名稱），或點選上方熱搜標籤。`}
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+              <button id="btn-search-show-discover" class="action-pill-btn" style="padding: 6px 16px; font-weight: 600;">⭐ 查看精選神作推薦</button>
+              ${isOffline ? '<button id="btn-search-retry-offline" class="action-pill-btn secondary" style="padding: 6px 16px;">🔄 測試連線</button>' : ''}
+            </div>
           </div>
         `;
+
+        const showDiscoverBtn = list.querySelector('#btn-search-show-discover');
+        if (showDiscoverBtn) {
+          showDiscoverBtn.addEventListener('click', () => {
+            const sInput = document.getElementById('search-input');
+            if (sInput) sInput.value = '';
+            this.renderDiscoverDefault();
+          });
+        }
+
+        const retryBtn = list.querySelector('#btn-search-retry-offline');
+        if (retryBtn) {
+          retryBtn.addEventListener('click', async () => {
+            retryBtn.textContent = '測試中...';
+            await novelSources.checkServerHealth();
+            this.doSearch(keyword);
+          });
+        }
         return;
       }
 
-      let html = '';
+      let html = `
+        <div style="margin-bottom: 12px; font-size: 12px; color: var(--wr-text-secondary); display: flex; align-items: center; justify-content: space-between;">
+          <span>搜尋「${this.escapeHtml(keyword)}」找到 ${results.length} 本相關小說</span>
+          <button id="btn-clear-search-view" class="action-pill-btn mini">返回推薦</button>
+        </div>
+      `;
+
       results.forEach(book => {
         const inShelf = novelDB.isInShelf(book.id);
         const displayTitle = this.formatChinese(book.title);
@@ -1034,40 +1250,16 @@ class NovelApp {
 
       list.innerHTML = html;
 
-      list.querySelectorAll('.result-card').forEach(card => {
-        const bookId = card.getAttribute('data-book-id');
-        const bookData = results.find(r => r.id === bookId);
+      const clearBtn = list.querySelector('#btn-clear-search-view');
+      if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+          const sInput = document.getElementById('search-input');
+          if (sInput) sInput.value = '';
+          this.renderDiscoverDefault();
+        });
+      }
 
-        const readBtn = card.querySelector('[data-action="read"]');
-        if (readBtn) {
-          readBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            novelDB.addToShelf(bookData);
-            this.openBook(bookId);
-          });
-        }
-
-        const shelfBtn = card.querySelector('[data-action="add-shelf"]');
-        if (shelfBtn) {
-          shelfBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const nowInShelf = novelDB.isInShelf(bookId);
-            if (nowInShelf) {
-              this.showToast(`《${this.formatChinese(bookData.title)}》已在書架中（可在書架首頁管理）`);
-              return;
-            }
-            novelDB.addToShelf(bookData);
-            shelfBtn.classList.add('in-shelf');
-            shelfBtn.textContent = '✓ 已在書架';
-            const coverEl = card.querySelector('.result-mini-cover');
-            if (coverEl && !coverEl.querySelector('.cover-shelf-ribbon')) {
-              coverEl.insertAdjacentHTML('afterbegin', '<div class="cover-shelf-ribbon">✓ 已收藏</div>');
-            }
-            this.renderBookshelf();
-            this.showToast(`✓ 已將《${this.formatChinese(bookData.title)}》加入書架！`);
-          });
-        }
-      });
+      this.bindResultCardEvents(list, results);
     } catch (err) {
       list.innerHTML = `<div style="text-align: center; padding: 30px; color: #ef4444;">搜尋發生錯誤: ${err.message}</div>`;
     }
@@ -1083,7 +1275,16 @@ class NovelApp {
 
     const syncStatusEl = document.getElementById('stat-sync-status');
     if (syncStatusEl) {
-      syncStatusEl.innerHTML = `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#10b981;"></span> 192.168.0.114`;
+      const isOnline = novelSources.isServerOnline;
+      if (isOnline === false) {
+        syncStatusEl.innerHTML = `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#ef4444;"></span> 伺服器未連線`;
+        syncStatusEl.style.color = '#ef4444';
+      } else {
+        const sInfo = novelSources.serverInfo;
+        const displayIp = (sInfo && sInfo.primaryIp) ? `${sInfo.primaryIp}:3001` : (window.location.host || 'localhost:3001');
+        syncStatusEl.innerHTML = `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#10b981;"></span> ${displayIp}`;
+        syncStatusEl.style.color = '#10b981';
+      }
     }
   }
 
@@ -1126,6 +1327,11 @@ class NovelApp {
       searchInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
           this.doSearch(e.target.value);
+        }
+      });
+      searchInput.addEventListener('input', (e) => {
+        if (!e.target.value.trim()) {
+          this.renderDiscoverDefault();
         }
       });
     }
@@ -1796,6 +2002,69 @@ class NovelApp {
       const modal = document.getElementById('modal-api-server');
       if (modal) modal.classList.remove('active');
       updateApiStatusUI();
+    });
+
+    // Mobile Connect & Cross-Device Sync Modal Triggers
+    const openMobileModal = async () => {
+      const modal = document.getElementById('modal-mobile-connect');
+      if (!modal) return;
+      modal.classList.add('active');
+
+      try {
+        const apiBase = novelSources.getApiBaseUrl();
+        const res = await fetch(`${apiBase}/api/status`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.ips && data.ips.length > 0) {
+            const wifi = data.ips.find(i => i.isWifi) || data.ips[0];
+            const eth = data.ips.find(i => !i.isWifi) || data.ips[1] || wifi;
+
+            const wifiUrl = wifi.url;
+            const ethUrl = eth.url;
+
+            const wifiEl = document.getElementById('mobile-url-wifi');
+            if (wifiEl) wifiEl.textContent = wifiUrl;
+
+            const ethEl = document.getElementById('mobile-url-eth');
+            if (ethEl) ethEl.textContent = ethUrl;
+
+            const qrImg = document.getElementById('mobile-qr-code-img');
+            if (qrImg) {
+              qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(wifiUrl)}`;
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Fetch server status for mobile modal notice:', err);
+      }
+    };
+
+    this.on('btn-header-mobile', 'click', () => openMobileModal());
+    this.on('card-sync-status', 'click', () => openMobileModal());
+    this.on('btn-close-mobile-modal', 'click', () => {
+      const modal = document.getElementById('modal-mobile-connect');
+      if (modal) modal.classList.remove('active');
+    });
+    this.on('modal-mobile-connect', 'click', (e) => {
+      if (e.target.id === 'modal-mobile-connect') {
+        e.target.classList.remove('active');
+      }
+    });
+
+    // Copy LAN URL button inside mobile modal
+    document.querySelectorAll('.btn-copy-url').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetId = btn.getAttribute('data-target');
+        const targetEl = document.getElementById(targetId);
+        const text = targetEl ? targetEl.textContent.trim() : '';
+        if (text) {
+          navigator.clipboard.writeText(text).then(() => {
+            this.showToast(`✓ 已複製網址: ${text}`);
+          }).catch(() => {
+            prompt('請手動選取複製網址：', text);
+          });
+        }
+      });
     });
   }
 

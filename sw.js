@@ -1,5 +1,5 @@
 // Service Worker for 墨韻讀書 (Offline PWA Support)
-const CACHE_NAME = 'moyu-reader-v5';
+const CACHE_NAME = 'moyu-reader-v9';
 
 const STATIC_ASSETS = [
   './',
@@ -39,14 +39,22 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  if (!event.request.url.startsWith('http')) return;
   const url = new URL(event.request.url);
 
-  // Bypass API requests to allow offline fallback in frontend IndexedDB
+  // API calls: Network-first, offline graceful JSON fallback
   if (url.pathname.startsWith('/api/')) {
+    event.respondWith(
+      fetch(event.request).catch(() => {
+        return new Response(JSON.stringify({ success: false, offline: true, error: 'Offline mode' }), {
+          headers: { 'Content-Type': 'application/json; charset=utf-8' }
+        });
+      })
+    );
     return;
   }
 
-  // Network-first with cache fallback
+  // Static Assets: Network-first with Cache fallback (ignoreSearch: true handles ?v=...)
   event.respondWith(
     fetch(event.request)
       .then((networkResponse) => {
@@ -58,18 +66,19 @@ self.addEventListener('fetch', (event) => {
         }
         return networkResponse;
       })
-      .catch(() => {
-        // If offline, serve from cache
-        return caches.match(event.request).then((cachedResponse) => {
-          if (cachedResponse) {
-            return cachedResponse;
-          }
-          // Fallback to index.html if navigating
-          if (event.request.mode === 'navigate') {
-            return caches.match('./index.html');
-          }
-          return new Response('離線模式', { status: 503, statusText: 'Offline' });
-        });
+      .catch(async () => {
+        // Network failed (offline): Match in cache, ignoring query parameters like ?v=233
+        const cached = await caches.match(event.request, { ignoreSearch: true });
+        if (cached) return cached;
+
+        // If offline and navigating, return cached index.html
+        if (event.request.mode === 'navigate') {
+          const indexCached = (await caches.match('./index.html', { ignoreSearch: true })) ||
+                              (await caches.match('./', { ignoreSearch: true }));
+          if (indexCached) return indexCached;
+        }
+
+        return new Response('離線模式', { status: 503, statusText: 'Offline' });
       })
   );
 });

@@ -359,6 +359,241 @@ const BUILTIN_NOVELS = [
 韓立翻身下床，整理好打著補丁的粗布短衫。他知道，這是自己走出大山、改變全家人命運的唯一機會。`
       }
     ]
+  },
+  {
+    id: 'novel_dldl',
+    title: '斗羅大陸',
+    author: '唐家三少',
+    category: '玄幻熱血',
+    rating: 9.8,
+    words: '298萬字',
+    status: '完結',
+    coverBg: 'linear-gradient(135deg, #1e3a8a, #3b82f6)',
+    coverTag: '經典神作',
+    intro: '唐門外門弟子唐三，因偷學內門絕學為唐門所不容，跳崖明志時卻發現沒有死，反而以另外一個身份來到了一個屬於武魂的世界，名叫斗羅大陸。當唐門暗器來到斗羅大陸，當唐三武魂覺醒，他能否在這片武魂的世界再鑄唐門的輝煌？',
+    chapters: [
+      {
+        id: 'dldl_1',
+        title: '第一章 穿越的唐家三少',
+        content: `巴蜀，歷來有天府之國的美譽，其中，最為著名的門派，莫過於唐門。
+唐門創立於何時已經無從考證，但唐門暗器與淬毒術，在整個江湖中卻是令人聞風喪膽的傳奇。
+
+鬼見愁，唐門最險峻的懸崖。
+此時，鬼見愁崖邊，正站著一個身形清瘦的年輕人。
+他穿著一身樸素的灰色外門弟子布袍，狂風吹拂著他額前的黑髮，露出一雙明亮而沉著的雙眸。
+
+他叫唐三，二十九歲，唐門外門弟子。
+自幼被長老收養，因展露出極為驚人的暗器天賦而備受器重。
+然而，外門弟子終究不得窺探唐門最高深的內門玄天寶錄。
+
+數日前，他耗費十年心血，終於在不借閱內門任何核心圖紙的情況下，憑藉超絕的悟性與推演，成功製造出了唐門傳說中最強的機括類暗器——佛怒唐蓮！
+但私學內門絕學，乃唐門門規所不容之死罪。
+
+「唐三，你走投無路了！」
+身後，傳來唐門掌門與數十位內門長老的怒喝聲。
+唐三平靜地回過身，對著眾位長老恭恭敬敬地磕了三個響頭。
+「唐三生是唐門人，死是唐門鬼。私學內門武學，唐三認罪。暗器與圖紙，唐三盡數歸還唐門，絕不帶走分毫。」
+言罷，唐三脫下布袍，縱身躍下了深不見底的萬丈深淵——鬼見愁！
+
+……
+當唐三再次恢復知覺的時候，他驚訝地發現，自己竟然沒有粉身碎骨。
+周圍的一切都縮小了數倍，陽光透過樹葉的縫隙灑在稚嫩的手掌上。
+他赫然變成了一個六歲的孩童！
+而這個世界，沒有內力，沒有鬥氣，卻有著神奇無比的力量——武魂！`
+      }
+    ]
+  },
+  {
+    id: 'novel_jl',
+    title: '劍來',
+    author: '烽火戲諸侯',
+    category: '古典仙俠',
+    rating: 9.8,
+    words: '1100萬字',
+    status: '連載',
+    coverBg: 'linear-gradient(135deg, #0f172a, #334155)',
+    coverTag: '仙俠巔峰',
+    intro: '大千世界，無奇不有。我陳平安，唯有一劍，可搬山，倒海，降妖，鎮魔，敕神，摘星，摧城，開天！一個生於泥瓶巷的草鞋少年，背著木劍，走出小鎮，走向波瀾壯闊的浩然天下。',
+    chapters: [
+      {
+        id: 'jl_1',
+        title: '第一章 驚蟄',
+        content: `二月二，龍抬頭。
+暮色裏，小鎮名叫泥瓶巷的僻靜地方，有位孤苦伶仃的清瘦少年，此時他正按照習俗，一手持蠟燭，一手持桃枝，照耀房梁、牆壁、木床等處，用桃枝敲敲打打，試圖借此驅趕蛇蠍、蜈蚣等。
+
+少年姓陳，名平安，爹娘早逝。
+在小鎮裏，他只是一個不起眼的燒瓷窯工學徒，穿著一雙露腳趾的草鞋，每天在泥瓶巷與老窯場之間來回奔波。
+
+泥瓶巷很深，深得像是裝不下陽光。
+少年走出破舊的院落，站在泥濘的小巷中。春雨細如牛毛，微涼的雨絲落在他的臉龐上。
+他望著灰濛濛的天空，眼神清澈而平靜。
+
+他不知道的是，這座看似平凡無奇的小鎮，名為驪珠洞天，是整個人間氣運匯聚的關鍵所在。
+各方隱世宗門、陸地神仙、飛升劍修，早已將目光投向了這片彈丸之地。
+少年的命運，也將在這一場春雨過後，徹底掀開浩浩蕩蕩的傳奇序幕。`
+      }
+    ]
+  },
+  {
+    id: 'novel_zt',
+    title: '遮天',
+    author: '辰東',
+    category: '古典仙俠',
+    rating: 9.8,
+    words: '635萬字',
+    status: '完結',
+    coverBg: 'linear-gradient(135deg, #450a0a, #991b1b)',
+    coverTag: '浩瀚史詩',
+    intro: '冰冷與黑暗並存的宇宙深處，九具龐大的龍屍拉著一口青銅古棺，亙古長存。一場泰山之巔的聚會，將葉凡等人帶入了一個浩瀚瑰麗、仙魔並存的修行大世。登天路，踏歌行，彈指遮天！',
+    chapters: [
+      {
+        id: 'zt_1',
+        title: '第一章 星空中的九龍拉棺',
+        content: `生命是世間最偉大的奇蹟。
+四方上下曰宇，往古來今曰宙。宇代表了空間，宙代表了時間。
+在無垠的宇宙星空深處，冰冷與黑暗是永恆的主題。
+
+然而，在這片死寂的太空中，九具龐然大物正橫亙虛空，緩緩前行。
+那是九具龍屍！
+每一具龍屍都長達百米，通體覆蓋著烏光森森的龍鱗，龍角崢嶸，蒼勁如虯龍，散發著令人心悸的遠古洪荒氣息。
+而更令人震撼的是，在九具神龍屍體的尾部，都綁縛著手臂粗細的黑色鐵索，鐵索的盡頭，赫然拉著一口長達二十米的青銅巨棺！
+
+九龍拉棺，穿越無盡星域，帶著遠古神話的蒼涼與神秘，徑直朝著太陽系的方向呼嘯而來！
+
+此時此刻，地球，泰山之巔。
+泰山，巍峨沉雄，氣勢磅礴，自古以來便是歷代帝王封禪祭天的神聖之地。
+大學畢業三年的葉凡，正與昔日的大學同學們站在玉皇頂上，眺望著壯麗的雲海落日。
+他們萬萬沒有想到，一場顛覆世界觀、跨越無盡星域的修行神話，即將在下一瞬間降臨泰山！`
+      }
+    ]
+  },
+  {
+    id: 'novel_dfdg',
+    title: '大奉打更人',
+    author: '賣報小郎君',
+    category: '仙俠探案',
+    rating: 9.7,
+    words: '380萬字',
+    status: '完結',
+    coverBg: 'linear-gradient(135deg, #1e1b4b, #312e81)',
+    coverTag: '現象級神作',
+    intro: '這個世界，有儒；有道；有佛；有妖；有術士。警校畢業的許七安幽幽醒來，發現自己身處牢獄之中，三日後便要發配邊陲……且看他如何憑藉現代刑偵知識與過人膽魄，在大奉王朝逆風翻盤，成為威震天下的傳奇打更人！',
+    chapters: [
+      {
+        id: 'dfdg_1',
+        title: '第一章 獄中驚魂',
+        content: `許七安是在一陣冰冷與潮濕中醒過來的。
+後頸傳來陣陣刺痛，像是被人用沉重的鈍器狠狠敲擊過一般。
+
+他迷迷糊糊地睜開眼，映入眼簾的不是自己溫暖整潔的單身公寓，而是一間昏暗、骯髒且瀰漫著黴爛氣味的牢房。
+四周是粗壯如臂的黑色鐵柵欄，牆壁上掛著生鏽的鐐銬，地面上鋪著發黑發臭的稻草。
+
+「我……被綁架了？」
+作為一名剛剛從刑警學院畢業的優秀警校生，許七安的大腦迅速運轉起來。
+但下一刻，無數洶湧龐雜的記憶碎片如潮水般席捲而來：
+大奉王朝……
+京兆府轄下長樂縣衙捕快……
+二叔許平志，因為運送戶部稅銀途中發生「稅銀落水化烏有」的奇案，全家被捕入獄，三日後問斬或刺字發配邊陲！
+
+「我穿越了？而且開局就是死刑犯？！」
+許七安倒吸了一口涼氣。
+他深知，在封建古代王朝，稅銀失竊乃是抄家滅門的重罪。
+想要活命，唯一的方法，便是在三日之內，破解這樁看似鬼神莫測的稅銀大案！`
+      }
+    ]
+  },
+  {
+    id: 'novel_xyj',
+    title: '西遊記',
+    author: '吳承恩',
+    category: '古典神魔名著',
+    rating: 9.9,
+    words: '82萬字',
+    status: '完結',
+    coverBg: 'linear-gradient(135deg, #7c2d12, #c2410c)',
+    coverTag: '四大名著',
+    intro: '混沌未分天地亂，茫茫渺渺無人見。自從盤古破鴻蒙，開闢從茲清濁辨。覆載群生仰至德，發明萬物皆成善。欲知造化會元功，須看西遊釋厄傳。',
+    chapters: [
+      {
+        id: 'xyj_1',
+        title: '第一回 靈根育孕源流出 心性修持大道生',
+        content: `詩曰：
+混沌未分天地亂，茫茫渺渺無人見。
+自從盤古破鴻蒙，開闢從茲清濁辨。
+覆載群生仰至德，發明萬物皆成善。
+欲知造化會元功，須看西遊釋厄傳。
+
+感盤古開闢，三皇治世，五帝定倫，世界之間，遂分為四大部洲：曰東勝神洲，曰西牛賀洲，曰南贍部洲，曰北俱蘆洲。這部書單表東勝神洲。
+海外有一國土，名曰傲來國。國近大海，海中有一座名山，喚為花果山。此山乃十洲之祖脈，三島之來龍，自開清濁而立，鴻蒙判後而成。
+
+那座山頂上，有一塊仙石。其石有三丈六尺五寸高，按周天三百六十五度；二丈四尺圍圓，按政曆二十四氣。上有九竅八孔，按九宮八卦。四面更無樹木遮陰，左右倒有芝蘭相襯。蓋自開闢以來，每受天真地秀，日精月華，感之既久，遂有靈通之意。內育仙胞。一日迸裂，產一石卵，似圓球樣大。因見風，化作一個石猴。
+
+五官俱備，四肢皆全。便就學爬學走，拜了四方。目運兩道金光，射衝斗府。
+貴由天產，神魔並驚！一段大鬧天宮與西天取經的千古傳奇，自此拉開序幕！`
+      }
+    ]
+  },
+  {
+    id: 'novel_hlm',
+    title: '紅樓夢',
+    author: '曹雪芹',
+    category: '古典文學巔峰',
+    rating: 9.9,
+    words: '107萬字',
+    status: '完結',
+    coverBg: 'linear-gradient(135deg, #831843, #be185d)',
+    coverTag: '文學瑰寶',
+    intro: '滿紙荒唐言，一把辛酸淚！都云作者痴，誰解其中味？以賈、史、王、薛四大家族的興衰為背景，以富貴公子賈寶玉為視角，描繪了一群閨閣佳人的悲劇命運與人生百態。',
+    chapters: [
+      {
+        id: 'hlm_1',
+        title: '第一回 甄士隱夢幻識通靈 賈雨村風塵懷閨秀',
+        content: `滿紙荒唐言，一把辛酸淚！
+都云作者痴，誰解其中味？
+
+列位看官：你道此書從何而來？說起根由雖近荒唐，細按則深有趣味。
+當日地陷東南，女媧氏煉石補天之時，於大荒山無稽崖練成高經十二丈、方經二十四丈頑石三萬六千五百零一块。
+媧皇氏只用了三萬六千五百塊，只單單剩了一塊未用，便棄在此山青埂峰下。
+
+誰知此石自經鍛煉之後，靈性已通，因見眾石俱得補天，獨自己無材不堪入選，遂自怨自嘆，日夜悲號慚愧。
+一日，正當嗟悼之際，俄見一僧一道遠遠而來，生得骨骼不凡，丰神迥異。
+僧道見此石溫潤瑩潔，幻化縮小為扇墜大小之美玉，攜入紅塵，經歷一場富貴溫柔、恩怨糾葛的大夢……`
+      }
+    ]
+  },
+  {
+    id: 'fanqie_7252612441702403104',
+    title: '玄學老祖她又又又烏鴉嘴了',
+    author: '胖胖魚頭醬',
+    category: '現代玄學爽文',
+    rating: 9.8,
+    words: '108萬字',
+    status: '完結',
+    coverBg: 'linear-gradient(135deg, #4c1d95, #6d28d9)',
+    coverTag: '番茄神作',
+    detailUrl: 'https://fanqienovel.com/page/7252612441702403104',
+    intro: '千年前的道門老祖顧雪清渡劫失敗，一睜眼竟重生在了被狠心繼母算計、送進精神病院的顧家大女兒身上。為了買回當年自己創立、如今卻已經沒落的清風觀，顧雪清重操舊業，開啟了直播算命捉鬼賺錢的道路！烏鴉嘴說啥中啥，全網徹底爆火！',
+    chapters: [
+      {
+        id: 'fanqie_7252612441702403104_ch_1',
+        title: '第1章 從精神病院醒來',
+        url: 'https://fanqienovel.com/reader/7252613240491311675',
+        content: `「顧雪清，修煉時間結束了，快過來吃藥了。」
+
+一個穿著病號服的女孩子正盤腿坐在床上閉著眼睛打坐。
+
+空蕩蕩的病號服顯得女孩子看上去極其瘦弱，但依舊遮擋不住她出色的容貌。
+
+護士走進門端著盤子朝顧雪清走去。
+
+顧雪清睜開眼睛的一瞬間，護士被她充滿威壓的眼神嚇了一跳，差點下意識的就要按響手裡的警報器。
+
+千年前威震天下的清風觀開山老祖顧雪清，渡劫失敗魂穿現代。
+她環視四周，神色平靜而冷冽：
+「精神病院？繼母陷害？不孝的徒子徒孫……」
+一段鐵口直斷、神鬼辟易的傳奇，自此拉開序幕！`
+      }
+    ]
   }
 ];
 
@@ -366,6 +601,26 @@ const BUILTIN_NOVELS = [
 class NovelSourcesService {
   constructor() {
     this.localBooks = [...BUILTIN_NOVELS];
+    this.isServerOnline = null;
+    this.serverInfo = null;
+  }
+
+  // Normalize Chinese strings for 100% resilient bidirectional cross-variant searching
+  normalizeChinese(str) {
+    if (!str) return '';
+    let s = str.toString().toLowerCase();
+    s = s.replace(/[《》「」【】“”"'`\s]/g, '')
+         .replace(/又{3,}/g, '又又又')
+         .replace(/馀/g, '余')
+         .replace(/鬥/g, '斗')
+         .replace(/祕/g, '秘')
+         .replace(/著/g, '着')
+         .replace(/裏|裡/g, '里');
+    if (typeof ChineseConv !== 'undefined') {
+      s = ChineseConv.t2s(s);
+      s = s.replace(/馀/g, '余');
+    }
+    return s;
   }
 
   // Get current backend API base URL (empty for same-origin, or custom cloud URL)
@@ -376,7 +631,37 @@ class NovelSourcesService {
         return custom.trim().replace(/\/+$/, '');
       }
     } catch (e) {}
+
+    // Dynamic origin fallback for file:// or static live-server ports
+    if (typeof window !== 'undefined' && window.location) {
+      if (window.location.protocol === 'file:') {
+        return 'http://localhost:3001';
+      }
+      if (window.location.port && window.location.port !== '3001') {
+        const host = window.location.hostname || 'localhost';
+        return `http://${host}:3001`;
+      }
+    }
     return '';
+  }
+
+  // Check backend server health status
+  async checkServerHealth() {
+    try {
+      const apiBase = this.getApiBaseUrl();
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 2500);
+      const res = await fetch(`${apiBase}/api/status`, { signal: controller.signal });
+      clearTimeout(timeoutId);
+      if (res.ok) {
+        const data = await res.json();
+        this.isServerOnline = true;
+        this.serverInfo = data;
+        return { online: true, info: data };
+      }
+    } catch (e) {}
+    this.isServerOnline = false;
+    return { online: false };
   }
 
   // Search across built-in library and live web scraper API
@@ -384,23 +669,21 @@ class NovelSourcesService {
     keyword = (keyword || '').trim();
     if (!keyword) return [];
 
-    const lowerKw = keyword.toLowerCase();
-    const tKw = typeof ChineseConv !== 'undefined' ? ChineseConv.s2t(lowerKw) : lowerKw;
-    const sKw = typeof ChineseConv !== 'undefined' ? ChineseConv.t2s(lowerKw) : lowerKw;
+    const normKw = this.normalizeChinese(keyword);
     const results = [];
 
-    // 1. Search Built-in Curated Library (支援簡體與繁體中文雙向智慧比對)
+    // 1. Search Built-in Curated Library (支援簡繁雙向智慧標準化比對)
     for (const book of this.localBooks) {
-      const bTitle = book.title.toLowerCase();
-      const bAuthor = book.author.toLowerCase();
-      const bCat = (book.category || '').toLowerCase();
-      const bIntro = (book.intro || '').toLowerCase();
+      const normTitle = this.normalizeChinese(book.title);
+      const normAuthor = this.normalizeChinese(book.author);
+      const normCat = this.normalizeChinese(book.category || '');
+      const normIntro = this.normalizeChinese(book.intro || '');
 
       const matches =
-        bTitle.includes(lowerKw) || bTitle.includes(tKw) || bTitle.includes(sKw) ||
-        bAuthor.includes(lowerKw) || bAuthor.includes(tKw) || bAuthor.includes(sKw) ||
-        bCat.includes(lowerKw) || bCat.includes(tKw) || bCat.includes(sKw) ||
-        bIntro.includes(lowerKw) || bIntro.includes(tKw) || bIntro.includes(sKw);
+        normTitle.includes(normKw) ||
+        normAuthor.includes(normKw) ||
+        normCat.includes(normKw) ||
+        normIntro.includes(normKw);
 
       if (matches) {
         results.push({
@@ -416,18 +699,20 @@ class NovelSourcesService {
     try {
       const apiBase = this.getApiBaseUrl();
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 4000);
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
       const res = await fetch(`${apiBase}/api/search?q=${encodeURIComponent(keyword)}`, {
         signal: controller.signal
       });
       clearTimeout(timeoutId);
 
       if (res.ok) {
+        this.isServerOnline = true;
         const data = await res.json();
         if (data.success && Array.isArray(data.results)) {
           for (const item of data.results) {
-            // Avoid duplicate titles
-            if (!results.some(r => r.title === item.title)) {
+            // Avoid duplicate titles with built-in books
+            const normItemTitle = this.normalizeChinese(item.title);
+            if (!results.some(r => this.normalizeChinese(r.title) === normItemTitle)) {
               results.push({
                 id: item.id,
                 title: item.title,
@@ -436,7 +721,7 @@ class NovelSourcesService {
                 category: item.category || '網絡連載',
                 cover: item.cover,
                 coverBg: 'linear-gradient(135deg, #374151, #1f2937)',
-                sourceBadge: '網絡免費源',
+                sourceBadge: item.source || '網絡免費源',
                 detailUrl: item.detailUrl,
                 isBuiltin: false,
                 chapters: []
@@ -446,7 +731,12 @@ class NovelSourcesService {
         }
       }
     } catch (e) {
-      console.log('Online search api notice:', e.message);
+      if (e.name === 'AbortError') {
+        console.warn('Online search request timed out after 10s');
+      } else {
+        this.isServerOnline = false;
+        console.log('Online search api notice (backend server unreachable):', e.message);
+      }
     }
 
     return results;
@@ -457,6 +747,28 @@ class NovelSourcesService {
     // 1. Check built-in first
     const local = this.localBooks.find(b => b.id === bookId);
     if (local) {
+      if (local.detailUrl && (!local.chapters || local.chapters.length <= 1)) {
+        try {
+          const apiBase = this.getApiBaseUrl();
+          const res = await fetch(`${apiBase}/api/book-catalog?url=${encodeURIComponent(local.detailUrl)}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.success && Array.isArray(data.chapters) && data.chapters.length > 0) {
+              return {
+                ...local,
+                chapters: data.chapters.map((ch, idx) => ({
+                  id: `${bookId}_ch_${idx + 1}`,
+                  title: ch.title,
+                  url: ch.url,
+                  content: (idx === 0 && local.chapters && local.chapters[0]) ? local.chapters[0].content : undefined
+                }))
+              };
+            }
+          }
+        } catch (e) {
+          console.warn('Could not fetch full remote catalog for builtin novel:', e);
+        }
+      }
       return local;
     }
 
@@ -571,7 +883,7 @@ class NovelSourcesService {
 
     return {
       title: chapter.title,
-      content: '此章節加載失敗，請檢查網絡連線或更換書源。'
+      content: '⚠️ 本章節尚未快取至離線庫。\n\n請在連接 Wi-Fi 時點擊頂部【📥 下載】按鈕預先下載章節，即可隨時隨地無網路離線暢讀！'
     };
   }
 

@@ -41,7 +41,8 @@ function fetchUrl(targetUrl, timeout = 8000) {
           'Accept-Language': 'zh-CN,zh;q=0.9,zh-TW;q=0.8,en;q=0.7',
           'Accept-Encoding': 'gzip, deflate'
         },
-        timeout: timeout
+        timeout: timeout,
+        rejectUnauthorized: false
       };
 
       const req = client.request(options, (res) => {
@@ -131,23 +132,100 @@ function cleanHtmlText(html) {
     .trim();
 }
 
+// Fanqie Novel / Web Search Fallback Scraper
+async function searchFanqieFallback(keyword) {
+  const cleanKw = (keyword || '').replace(/又{3,}/g, '又又又').trim();
+  const searchUrl = 'https://www.so.com/s?q=' + encodeURIComponent(cleanKw + ' 番茄小说');
+  try {
+    const res = await fetchUrl(searchUrl, 3500);
+    if (!res || !res.text) return [];
+
+    const regex = /<h3[^>]*>[\s\S]*?<a[^>]+href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi;
+    let m;
+    const items = [];
+    while ((m = regex.exec(res.text)) !== null && items.length < 5) {
+      const link = m[1];
+      const title = m[2].replace(/<[^>]+>/g, '').replace(/[-_].*$/, '').trim();
+      if (!title || title.includes('反馈') || title.length < 2) continue;
+
+      if (link.includes('so.com/link')) {
+        try {
+          const redirectRes = await fetchUrl(link, 2500);
+          const pageMatch = redirectRes.text ? redirectRes.text.match(/fanqienovel\.com\/page\/(\d+)/) : null;
+          const readerMatch = redirectRes.text ? redirectRes.text.match(/fanqienovel\.com\/reader\/(\d+)/) : null;
+          if (pageMatch) {
+            const bookId = pageMatch[1];
+            if (!items.some(x => x.id === 'fanqie_' + bookId)) {
+              items.push({
+                id: 'fanqie_' + bookId,
+                title: title.replace(/全文免费.*$/, '').replace(/完整版.*$/, '').trim(),
+                author: '番茄作家',
+                intro: `《${title}》番茄小說正版熱門全本免費在線閱讀`,
+                cover: '',
+                source: '番茄小說 (全本免費源)',
+                detailUrl: `https://fanqienovel.com/page/${bookId}`,
+                category: '網絡小說'
+              });
+            }
+          } else if (readerMatch) {
+            const readerId = readerMatch[1];
+            if (!items.some(x => x.id === 'fanqie_r_' + readerId)) {
+              items.push({
+                id: 'fanqie_r_' + readerId,
+                title: title.replace(/全文免费.*$/, '').replace(/完整版.*$/, '').trim(),
+                author: '番茄作家',
+                intro: `《${title}》番茄小說正版熱門全本免費在線閱讀`,
+                cover: '',
+                source: '番茄小說 (全本免費源)',
+                detailUrl: `https://fanqienovel.com/reader/${readerId}`,
+                category: '網絡小說'
+              });
+            }
+          }
+        } catch(e) {}
+      }
+    }
+    return items;
+  } catch (err) {
+    return [];
+  }
+}
+
 // Online Novel Sources Scrapers & Search Proxy (支援繁體搜尋自動轉簡體檢索大陸免費源)
 async function searchOnlineNovels(keyword) {
+  const rawKw = (keyword || '').replace(/[《》「」【】“”"'`\s]/g, '').trim();
+  if (!rawKw) return [];
+
+  // Normalize repeated characters (e.g. 又又又又 -> 又又又)
+  const cleanKw = rawKw.replace(/又{3,}/g, '又又又');
+
   const results = [];
-  const simplifiedKw = ChineseConv.t2s(keyword);
-  const keywordsToTry = [simplifiedKw];
-  if (simplifiedKw !== keyword) {
-    keywordsToTry.push(keyword);
+  // Standardize characters for optimal mainland novel database indexing
+  const normSimplified = ChineseConv.t2s(cleanKw)
+    .replace(/馀/g, '余')
+    .replace(/鬥/g, '斗')
+    .replace(/祕/g, '秘')
+    .replace(/著/g, '着')
+    .replace(/裏|裡/g, '里');
+
+  const normTraditional = ChineseConv.s2t(cleanKw);
+
+  const keywordsToTry = [normSimplified];
+  if (normSimplified !== cleanKw && !keywordsToTry.includes(cleanKw)) {
+    keywordsToTry.push(cleanKw);
+  }
+  if (normTraditional !== cleanKw && !keywordsToTry.includes(normTraditional)) {
+    keywordsToTry.push(normTraditional);
   }
 
   const seenIds = new Set();
 
+  // Source 1: 新筆趣閣 (即時可連線高速源)
   for (const kw of keywordsToTry) {
     const encodedKw = encodeURIComponent(kw);
-    // Source 1: 新筆趣閣 (即時可連線高速源)
     try {
       const searchUrl = `https://www.biquge7.xyz/search?keyword=${encodedKw}`;
-      const res = await fetchUrl(searchUrl, 5000);
+      const res = await fetchUrl(searchUrl, 3500);
       if (res.status === 200 && res.text) {
         const itemRegex = /<div class="tui_1_item">([\s\S]*?)<\/div>\s*<\/div>/gi;
         let match;
@@ -156,19 +234,25 @@ async function searchOnlineNovels(keyword) {
           const linkMatch = /<a[^>]+href="(\/\d+)"[^>]*title="([^"]+)"/i.exec(block);
           const authorMatch = /<span class="author">([^<]+)<\/span>/i.exec(block);
           const coverMatch = /<img[^>]+src="([^"]+)"/i.exec(block);
+          const introMatch = /<p>([\s\S]*?)<\/p>/i.exec(block);
 
           if (linkMatch) {
             const bookId = 'bqg7_' + linkMatch[1].replace(/\//g, '');
             if (!seenIds.has(bookId)) {
               seenIds.add(bookId);
+              let introText = introMatch ? introMatch[1].replace(/<[^>]+>/g, '').trim() : '';
+              if (!introText) {
+                introText = `《${linkMatch[2].trim()}》全本免費在線閱讀`;
+              }
+
               results.push({
                 id: bookId,
                 title: linkMatch[2].trim(),
                 author: authorMatch ? authorMatch[1].trim() : '網絡作家',
-                intro: `《${linkMatch[2].trim()}》全本免費有聲小說在線播講閱讀`,
+                intro: introText,
                 cover: coverMatch ? coverMatch[1] : '',
-                source: '新筆趣閣 (高速在線源)',
-                detailUrl: `https://www.biquge7.top${linkMatch[1]}`,
+                source: '新筆趣閣 (全網免費高速源)',
+                detailUrl: `https://www.biquge7.xyz${linkMatch[1]}`,
                 category: '網絡小說'
               });
             }
@@ -180,6 +264,19 @@ async function searchOnlineNovels(keyword) {
     }
 
     if (results.length > 0) break;
+  }
+
+  // Source 2: 番茄小說 & 全網熱門小說智慧備用檢索
+  if (results.length === 0) {
+    try {
+      const fanqieResults = await searchFanqieFallback(normSimplified);
+      for (const item of fanqieResults) {
+        if (!seenIds.has(item.id)) {
+          seenIds.add(item.id);
+          results.push(item);
+        }
+      }
+    } catch (e) {}
   }
 
   return results;
@@ -522,6 +619,30 @@ async function getChapterContent(chapterUrl) {
   }
 }
 
+// Helper: Get real local area network interfaces (excluding virtual VMware/WSL adapters)
+function getLanInterfaces() {
+  const ifaces = os.networkInterfaces();
+  const valid = [];
+  for (const [name, list] of Object.entries(ifaces)) {
+    if (/vmnet|virtual|wsl|hyper-v|vethernet|loopback|pseudo|tailscale/i.test(name)) continue;
+    for (const iface of list) {
+      if (iface.family === 'IPv4' && !iface.internal) {
+        if (!iface.address.startsWith('169.254.')) {
+          const isWifi = /wi-?fi|wlan|無線/i.test(name);
+          valid.push({
+            name,
+            ip: iface.address,
+            isWifi,
+            url: `http://${iface.address}:${PORT}`
+          });
+        }
+      }
+    }
+  }
+  valid.sort((a, b) => (b.isWifi ? 1 : 0) - (a.isWifi ? 1 : 0));
+  return valid;
+}
+
 // HTTP Server
 const server = http.createServer(async (req, res) => {
   const parsedUrl = new URL(req.url, `http://localhost:${PORT}`);
@@ -536,6 +657,25 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(204);
     res.end();
     return;
+  }
+
+  // API 0: Health Ping & Server Info
+  if (pathname === '/api/ping' || pathname === '/api/status') {
+    const lanList = getLanInterfaces();
+    const primary = lanList[0] || { ip: '127.0.0.1', url: `http://localhost:${PORT}` };
+
+    res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+    return res.end(JSON.stringify({
+      success: true,
+      status: 'online',
+      version: '2.0.0',
+      port: PORT,
+      ip: primary.ip,
+      primaryIp: primary.ip,
+      primaryUrl: primary.url,
+      ips: lanList,
+      timestamp: Date.now()
+    }));
   }
 
   // API 1: Search online novels
@@ -595,6 +735,61 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // API 3.5: Persistent Book Chapters Hub (Stores & syncs full offline chapters for TXT / crawled books)
+  if (pathname === '/api/book-chapters') {
+    const chaptersDir = path.join(__dirname, 'data', 'chapters');
+    if (!fs.existsSync(chaptersDir)) {
+      fs.mkdirSync(chaptersDir, { recursive: true });
+    }
+
+    if (req.method === 'GET') {
+      const bookId = parsedUrl.searchParams.get('id') || '';
+      if (!bookId) {
+        res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+        return res.end(JSON.stringify({ success: false, error: 'Missing id parameter' }));
+      }
+      const safeId = bookId.replace(/[^a-zA-Z0-9_-]/g, '_');
+      const filePath = path.join(chaptersDir, `${safeId}.json`);
+      if (fs.existsSync(filePath)) {
+        try {
+          const raw = fs.readFileSync(filePath, 'utf-8');
+          res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+          return res.end(raw);
+        } catch (e) {
+          res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+          return res.end(JSON.stringify({ success: false, error: e.message }));
+        }
+      }
+      res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+      return res.end(JSON.stringify({ success: false, notFound: true, chapters: [] }));
+    }
+
+    if (req.method === 'POST') {
+      let body = '';
+      req.on('data', chunk => body += chunk);
+      req.on('end', () => {
+        try {
+          const payload = JSON.parse(body || '{}');
+          const bookId = payload.bookId;
+          const chapters = payload.chapters;
+          if (!bookId || !Array.isArray(chapters)) {
+            res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+            return res.end(JSON.stringify({ success: false, error: 'Invalid payload' }));
+          }
+          const safeId = bookId.replace(/[^a-zA-Z0-9_-]/g, '_');
+          const filePath = path.join(chaptersDir, `${safeId}.json`);
+          fs.writeFileSync(filePath, JSON.stringify({ success: true, bookId, chapters, updatedAt: Date.now() }), 'utf-8');
+          res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({ success: true, count: chapters.length }));
+        } catch (err) {
+          res.writeHead(500, { 'Content-Type': 'application/json; charset=utf-8' });
+          res.end(JSON.stringify({ success: false, error: err.message }));
+        }
+      });
+      return;
+    }
+  }
+
   // API 4: Sync Bookshelf & Reading Progress (Local Server Hub)
   if (pathname === '/api/sync') {
     const dataDir = path.join(__dirname, 'data');
@@ -629,6 +824,7 @@ const server = http.createServer(async (req, res) => {
             shelf: payload.shelf || [],
             progress: payload.progress || {},
             settings: payload.settings || {},
+            deletedIds: Array.isArray(payload.deletedIds) ? payload.deletedIds : [],
             updatedAt: Date.now()
           };
           fs.writeFileSync(syncFile, JSON.stringify(toSave, null, 2), 'utf-8');
@@ -674,13 +870,10 @@ if (require.main === module) {
     console.log(`======================================================`);
     console.log(`• 本機預覽: http://localhost:${PORT}`);
 
-    const interfaces = os.networkInterfaces();
-    for (const name of Object.keys(interfaces)) {
-      for (const iface of interfaces[name]) {
-        if (iface.family === 'IPv4' && !iface.internal) {
-          console.log(`• 手機/同 Wi-Fi 預覽: http://${iface.address}:${PORT}`);
-        }
-      }
+    const lanList = getLanInterfaces();
+    for (const item of lanList) {
+      const tag = item.isWifi ? 'Wi-Fi (手機首選)' : item.name;
+      console.log(`• 手機連線 [${tag}]: ${item.url}`);
     }
     console.log(`======================================================\n`);
   });
